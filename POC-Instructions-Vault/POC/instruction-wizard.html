@@ -135,6 +135,7 @@ p { margin-bottom: 1rem; color: var(--text-dim); }
 .badge-engagement { background: rgba(16,185,129,0.2); color: var(--success); }
 .badge-entity { background: rgba(245,158,11,0.2); color: var(--warning); font-family: 'SF Mono','Fira Code','Consolas',monospace; }
 .badge-poc { background: rgba(136,136,160,0.2); color: var(--text-dim); }
+.badge-loqate { background: rgba(139,92,246,0.18); color: var(--accent2); }
 
 /* Type grid */
 .type-grid {
@@ -198,6 +199,54 @@ p { margin-bottom: 1rem; color: var(--text-dim); }
 .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
 .field.invalid .err { display: block; }
 .field.hidden { display: none; }
+
+/* Loqate address search */
+.loqate-box {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+}
+.loqate-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+.loqate-head label { font-size: 0.82rem; font-weight: 600; color: var(--text); }
+.loqate-row { display: flex; gap: 0.5rem; }
+.loqate-row input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+}
+.loqate-row input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+}
+.loqate-status { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.45rem; }
+.loqate-status.ok { color: var(--success); }
+.loqate-status.error { color: var(--danger); }
+.loqate-results { list-style: none; margin-top: 0.5rem; max-height: 230px; overflow-y: auto; }
+.loqate-results li {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.loqate-results li:hover { border-color: var(--accent); background: rgba(99,102,241,0.08); }
+.loqate-results .lr-text { font-weight: 600; font-size: 0.85rem; }
+.loqate-results .lr-desc { color: var(--text-dim); font-size: 0.75rem; }
+.loqate-key { margin-top: 0.6rem; }
+.loqate-key summary { font-size: 0.72rem; color: var(--text-dim); cursor: pointer; }
+.loqate-key summary:hover { color: var(--text); }
+.loqate-key .loqate-row { margin-top: 0.5rem; }
+.btn-sm { padding: 0.5rem 0.9rem; font-size: 0.8rem; }
 
 /* Nav */
 .wizard-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
@@ -390,6 +439,27 @@ pre code { color: var(--text); }
         <p>The subject property of the instruction.</p>
       </div>
     </div>
+
+    <div class="loqate-box">
+      <div class="loqate-head">
+        <label for="loqateQuery">Address search</label>
+        <span class="badge badge-loqate">LOQATE</span>
+      </div>
+      <div class="loqate-row">
+        <input type="text" id="loqateQuery" autocomplete="off"
+               placeholder="Postcode or street address, e.g. EC2M 7NH">
+      </div>
+      <div class="loqate-status" id="loqateStatus">Type at least 3 characters — pick a suggestion to verify and fill the fields below (Find + Verify, as in POC-Address).</div>
+      <ul class="loqate-results" id="loqateResults"></ul>
+      <details class="loqate-key">
+        <summary>API key</summary>
+        <div class="loqate-row">
+          <input type="text" id="loqateKey" placeholder="Loqate API key">
+          <button type="button" class="btn btn-sm" id="loqateKeySave">Save</button>
+        </div>
+      </details>
+    </div>
+
     <div class="form-grid">
       <div class="field span-2">
         <label for="address">Address <span class="req">*</span></label>
@@ -1088,6 +1158,231 @@ function bindPanel(panelId, stateKey) {
   });
 }
 
+/* ============================================================
+   Loqate address lookup — ported from POC-Address
+   Find v1.20 (typeahead + container drill-down) and
+   Batch v1.20 (Verify → structured address), called straight
+   from the browser like POC/poc-address-app.html does.
+   ============================================================ */
+const LOQATE_FIND_URL = 'https://api.addressy.com/Capture/Interactive/Find/v1.20/json6.ws';
+const LOQATE_VERIFY_URL = 'https://api.addressy.com/Cleansing/International/Batch/v1.20/json6.ws';
+const LOQATE_DEFAULT_KEY = 'BY92-NN99-ER43-XT19';   // default key used by the POC-Address backend
+
+const OPTION_COUNTRIES = ['France', 'Germany', 'Spain', 'Poland', 'United Kingdom', 'Netherlands'];
+const COUNTRY_ISO = {
+  'France': 'FR', 'Germany': 'DE', 'Spain': 'ES', 'Poland': 'PL',
+  'United Kingdom': 'GB', 'Netherlands': 'NL'
+};
+const ISO_TO_OPTION = {
+  FR: 'France', DE: 'Germany', ES: 'Spain', PL: 'Poland',
+  GB: 'United Kingdom', NL: 'Netherlands'
+};
+
+let loqateKey = LOQATE_DEFAULT_KEY;
+try {
+  const saved = localStorage.getItem('loqate_api_key');
+  if (saved !== null) loqateKey = saved;          // explicit save wins, even if cleared
+} catch (e) { /* storage unavailable */ }
+
+/* Country of the search: the Property tab's country select drives the Countries param */
+function currentIso() {
+  const sel = document.getElementById('country');
+  const name = (sel && sel.value) || state.property.country || '';
+  return COUNTRY_ISO[name];
+}
+
+/* Find: GET + recursive Container drill-down until items are Addresses */
+async function loqateFind(text, iso) {
+  const url = new URL(LOQATE_FIND_URL);
+  url.searchParams.set('Key', loqateKey);
+  url.searchParams.set('Text', text);
+  if (iso) url.searchParams.set('Countries', iso);
+  url.searchParams.set('Limit', '100');
+
+  let res = await fetch(url.toString());
+  let data = await res.json();
+  if (data.Items && data.Items[0] && data.Items[0].Error) {
+    throw new Error(data.Items[0].Description || 'Loqate Find error');
+  }
+  let items = (data && data.Items) || [];
+  let depth = 5;
+  while (depth > 0 && items.length > 0 && items[0].Type !== 'Address') {
+    url.searchParams.set('Container', items[0].Id);
+    res = await fetch(url.toString());
+    data = await res.json();
+    if (data.Items && data.Items.length > 0) items = data.Items;
+    else break;
+    depth--;
+  }
+  return items
+    .filter(i => i.Type === 'Address')
+    .map(i => ({ id: i.Id, text: i.Text, description: i.Description }));
+}
+
+/* Verify: Batch v1.20 → the matched structured address */
+async function loqateVerify(result, iso) {
+  const payload = {
+    Key: loqateKey,
+    GeoCode: true,
+    Addresses: [{
+      Id: result.id,
+      Address: result.text,
+      Address1: result.text,
+      Locality: result.description || '',
+      Country: iso || ''
+    }],
+    Options: { Process: 'Verify', Enhance: false, ServerOptions: { OutputAddressFormat: 'YES' } }
+  };
+  const res = await fetch(LOQATE_VERIFY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  const data = await res.json();
+  const item = Array.isArray(data) ? data[0] : (data && data.Items ? data.Items[0] : null);
+  if (!item || item.Error) throw new Error((item && item.Description) || 'Address not found');
+  return (item.Matches && item.Matches[0]) ? item.Matches[0] : item;
+}
+
+/* Map a verify match onto the Property tab's four address fields */
+function optionForCountry(name) {
+  return (name && OPTION_COUNTRIES.indexOf(name) >= 0) ? name : '';
+}
+
+function mapVerifyMatch(match) {
+  let address = match.Address1 || '';
+  if (!address && match.Address) address = String(match.Address).split(/<br\s*\/?>/i)[0].trim();
+  const postcode = match.PostalCode || match.PostalCodePrimary || '';
+  let city = match.Locality || '';
+  if (!city && match.Address2 && match.Address2 !== postcode) city = match.Address2;
+  if (!city && match.AdministrativeArea && match.AdministrativeArea !== postcode) city = match.AdministrativeArea;
+  let country = optionForCountry(match.CountryName) || optionForCountry(match.Country);
+  if (!country) {
+    const iso = String(match['ISO3166-2'] || match.ISO3166_2 || match.Country || '').toUpperCase().slice(0, 2);
+    country = ISO_TO_OPTION[iso] || '';
+  }
+  return { address: address, city: city, postcode: postcode, country: country };
+}
+
+/* Fill one Property field (state + input + validation flag) */
+function setPropertyField(key, value) {
+  if (value === undefined || value === null) value = '';
+  state.property[key] = value;
+  const el = document.querySelector('#panel-property [data-key="' + key + '"]');
+  if (el) {
+    el.value = String(value);
+    const f = el.closest('.field');
+    if (f) f.classList.remove('invalid');
+  }
+}
+
+function applyAddressToForm(result, match) {
+  const mapped = mapVerifyMatch(match);
+  if (mapped.address) setPropertyField('address', mapped.address);
+  if (mapped.city) setPropertyField('city', mapped.city);
+  if (mapped.postcode) setPropertyField('postcode', mapped.postcode);
+  if (mapped.country) setPropertyField('country', mapped.country);
+  state.property.loqateId = match.ID || match.Id || (result && result.id) || '';
+  if (match.Latitude && match.Longitude) {
+    state.property.latitude = match.Latitude;
+    state.property.longitude = match.Longitude;
+  }
+  onDraftChanged();
+  scheduleSave();
+  renderSteps();
+  setLoqateStatus(
+    'Verified: ' + [mapped.address, mapped.city, mapped.postcode].filter(Boolean).join(', '),
+    'ok'
+  );
+}
+
+/* ---------- Loqate UI ---------- */
+let loqateTimer = null;
+let loqateReq = 0;
+
+function setLoqateStatus(msg, cls) {
+  const el = document.getElementById('loqateStatus');
+  el.textContent = msg;
+  el.className = 'loqate-status' + (cls ? ' ' + cls : '');
+}
+
+function clearLoqateResults() {
+  document.getElementById('loqateResults').innerHTML = '';
+}
+
+function renderLoqateResults(items) {
+  const ul = document.getElementById('loqateResults');
+  ul.innerHTML = '';
+  if (!items.length) {
+    setLoqateStatus('No addresses found for that search.', 'error');
+    return;
+  }
+  items.forEach(item => {
+    const li = document.createElement('li');
+    const t = document.createElement('div');
+    t.className = 'lr-text';
+    t.textContent = item.text;               // textContent, never innerHTML — API data
+    const d = document.createElement('div');
+    d.className = 'lr-desc';
+    d.textContent = item.description || '';
+    li.appendChild(t);
+    li.appendChild(d);
+    li.addEventListener('click', () => pickLoqateAddress(item));
+    ul.appendChild(li);
+  });
+  setLoqateStatus(items.length + (items.length === 1 ? ' match — pick one to verify' : ' matches — pick one to verify'), '');
+}
+
+async function searchLoqate() {
+  const q = document.getElementById('loqateQuery').value.trim();
+  const req = ++loqateReq;
+  if (q.length < 3) {
+    clearLoqateResults();
+    setLoqateStatus('Type at least 3 characters to search.');
+    return;
+  }
+  const iso = currentIso();
+  setLoqateStatus('Searching Loqate' + (iso ? ' (' + iso + ')' : '') + '…');
+  try {
+    const items = await loqateFind(q, iso);
+    if (req !== loqateReq) return;           // superseded by a newer search/selection
+    renderLoqateResults(items);
+  } catch (e) {
+    if (req !== loqateReq) return;
+    clearLoqateResults();
+    setLoqateStatus('Search failed: ' + e.message, 'error');
+  }
+}
+
+async function pickLoqateAddress(item) {
+  const req = ++loqateReq;                   // cancels any in-flight search
+  clearLoqateResults();
+  setLoqateStatus('Verifying address…');
+  try {
+    const match = await loqateVerify(item, currentIso());
+    if (req !== loqateReq) return;
+    applyAddressToForm(item, match);
+  } catch (e) {
+    if (req !== loqateReq) return;
+    setLoqateStatus('Verify failed: ' + e.message, 'error');
+  }
+}
+
+function initLoqate() {
+  const q = document.getElementById('loqateQuery');
+  q.addEventListener('input', () => {
+    clearTimeout(loqateTimer);
+    loqateTimer = setTimeout(searchLoqate, 400);
+  });
+  const keyInput = document.getElementById('loqateKey');
+  keyInput.value = loqateKey;
+  document.getElementById('loqateKeySave').addEventListener('click', () => {
+    loqateKey = keyInput.value.trim();
+    try { localStorage.setItem('loqate_api_key', loqateKey); } catch (e) { /* ignore */ }
+    setLoqateStatus(loqateKey ? 'API key saved' : 'API key cleared — lookups will fail', loqateKey ? 'ok' : 'error');
+  });
+}
+
 /* ---------- Step 4: dynamic details fields ---------- */
 function renderDetails() {
   const wrap = document.getElementById('detailsFields');
@@ -1283,6 +1578,9 @@ function renderReview() {
       row('Postcode', state.property.postcode) + row('Country', state.property.country) +
       row('Title number', state.property.titleNumber) + row('Tenure', state.property.tenure) +
       row('Lease term', state.property.leaseTerm) + row('Sector', state.property.propertySector) +
+      row('Loqate ID', state.property.loqateId) +
+      row('Coordinates', (state.property.latitude && state.property.longitude)
+        ? state.property.latitude + ', ' + state.property.longitude : '') +
     '</div>' +
     '<div class="review-card"><h4>Details <span class="edit" data-goto="3">edit</span></h4>' +
       (detailsRows || '<div class="review-row"><span class="k">—</span></div>') +
@@ -1419,6 +1717,7 @@ renderSteps();
 bindPanel('panel-client', 'client');
 bindPanel('panel-property', 'property');
 bindPanel('panel-terms', 'terms');
+initLoqate();
 goTo(0);
 initDB();
 
@@ -1430,6 +1729,8 @@ window.addEventListener('beforeunload', () => {
 globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview,
   initDB, persist, missingRequired, stepComplete, accept, goTo, bindPanel, applyRestored,
   onDraftChanged, renderReadiness,
+  loqateFind, loqateVerify, mapVerifyMatch, applyAddressToForm, currentIso,
+  renderLoqateResults, clearLoqateResults, searchLoqate, initLoqate, LOQATE_DEFAULT_KEY,
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
 
