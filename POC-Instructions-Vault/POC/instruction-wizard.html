@@ -250,6 +250,20 @@ p { margin-bottom: 1rem; color: var(--text-dim); }
 .loqate-key summary { font-size: 0.72rem; color: var(--text-dim); cursor: pointer; }
 .loqate-key summary:hover { color: var(--text); }
 .loqate-key .loqate-row { margin-top: 0.5rem; }
+.loqate-raw {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem;
+  margin-top: 0.5rem;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+}
 .btn-sm { padding: 0.5rem 0.9rem; font-size: 0.8rem; }
 
 /* Nav */
@@ -461,6 +475,10 @@ pre code { color: var(--text); }
           <input type="text" id="loqateKey" placeholder="Loqate API key">
           <button type="button" class="btn btn-sm" id="loqateKeySave">Save</button>
         </div>
+      </details>
+      <details class="loqate-key">
+        <summary>Verify response (raw)</summary>
+        <pre class="loqate-raw" id="loqateRaw">No verification yet.</pre>
       </details>
     </div>
 
@@ -1000,6 +1018,7 @@ function applyRestored(r) {
   fillPanel('panel-property', state.property);
   fillPanel('panel-terms', state.terms);
   document.getElementById('leaseTermField').classList.toggle('hidden', state.property.tenure !== 'Leasehold');
+  renderLoqateRaw();
   renderSteps();
 }
 
@@ -1226,34 +1245,55 @@ async function loqateFind(text, iso) {
     .map(i => ({ id: i.Id, text: i.Text, description: i.Description }));
 }
 
-/* Verify: Batch v1.20 → the matched structured address */
-async function loqateVerify(result, iso) {
-  const payload = {
-    Key: loqateKey,
-    GeoCode: true,
-    Addresses: [{
-      Id: result.id,
-      Address: result.text,
-      Address1: result.text,
-      Locality: result.description || '',
-      Country: iso || ''
-    }],
-    Options: { Process: 'Verify', Enhance: false, ServerOptions: { OutputAddressFormat: 'YES' } }
-  };
-  const res = await fetch(LOQATE_VERIFY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if (res && res.ok === false) throw new Error('HTTP ' + res.status);
-  const data = await res.json();
-  // Batch responses come as an array, an {Items:[…]} envelope, or a bare match object
+/* Verify: Batch v1.20 → the matched structured address.
+   Batch replies arrive as an array, an {Items:[…]} envelope, or a bare match
+   object; a response with no usable match fields triggers one text-only retry. */
+function batchResult(data) {
   let item = null;
   if (Array.isArray(data)) item = data[0];
   else if (data && data.Items && data.Items[0]) item = data.Items[0];
   else if (data && (data.Matches || data.Address1 || data.Address || data.PostalCode)) item = data;
-  if (!item || item.Error) throw new Error((item && item.Description) || 'Address not found');
-  return (item.Matches && item.Matches[0]) ? item.Matches[0] : item;
+  if (!item) return { match: null, error: null };
+  if (item.Error) return { match: null, error: item.Description || 'Address not found' };
+  const match = (item.Matches && item.Matches[0]) ? item.Matches[0] : item;
+  const usable = match && (match.Address || match.Address1 || match.AddressFormat ||
+    match.PostalCode || match.Thoroughfare || match.DeliveryAddress);
+  return { match: usable ? match : null, error: usable ? null : (item.Description || null) };
+}
+
+async function batchVerify(addresses) {
+  const res = await fetch(LOQATE_VERIFY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      Key: loqateKey,
+      GeoCode: true,
+      Addresses: addresses,
+      Options: { Process: 'Verify', Enhance: false, ServerOptions: { OutputAddressFormat: 'YES' } }
+    })
+  });
+  if (res && res.ok === false) throw new Error('HTTP ' + res.status);
+  return batchResult(await res.json());
+}
+
+async function loqateVerify(result, iso) {
+  let res = await batchVerify([{
+    Id: result.id,
+    Address: result.text,
+    Address1: result.text,
+    Locality: result.description || '',
+    Country: iso || ''
+  }]);
+  if (!res.match && !res.error) {
+    // Id lookup resolved nothing — retry as a pure text cleanse without the Id
+    res = await batchVerify([{
+      Address: [result.text, result.description].filter(Boolean).join(', '),
+      Locality: result.description || '',
+      Country: iso || ''
+    }]);
+  }
+  if (!res.match) throw new Error(res.error || 'Address not found');
+  return res.match;
 }
 
 /* Map a verify match onto the Property tab's four address fields */
@@ -1268,25 +1308,42 @@ function resolveCountry(match) {
   return ISO_TO_OPTION[iso] || '';
 }
 
+function splitAddressLines(s) {
+  return String(s).split(/<br\s*\/?>|\r?\n/i).map(x => x.trim()).filter(Boolean);
+}
+
 function mapVerifyMatch(match) {
   const postcode = match.PostalCode || match.PostalCodePrimary || '';
   const country = resolveCountry(match);
   let city = match.Locality || '';
   if (!city && match.Address2 && match.Address2 !== postcode) city = match.Address2;
   if (!city && match.AdministrativeArea && match.AdministrativeArea !== postcode) city = match.AdministrativeArea;
+  // A Locality echo can drag the postcode along with it — trim it back off
+  if (city && postcode && city.toLowerCase().indexOf(postcode.toLowerCase()) >= 0) {
+    const head = city.slice(0, city.toLowerCase().indexOf(postcode.toLowerCase()))
+      .replace(/[\s,;/|-]+$/, '').trim();
+    city = head || (match.Address2 && match.Address2 !== postcode ? match.Address2 : '');
+  }
 
-  // Address lines: the Address blob first, then AddressFormat composition, then Address1
+  // Address lines: the Address blob first, then AddressFormat composition,
+  // then the numbered Address1..4 / DeliveryAddress lines
   let lines = [];
   if (match.Address) {
-    lines = String(match.Address).split(/<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
+    lines = splitAddressLines(match.Address);
   }
   if (!lines.length && match.AddressFormat) {
-    lines = String(match.AddressFormat).split(/<br\s*\/?>/i).map(fmt =>
-      fmt.trim().split(/\s+/).map(f => (match[f] !== undefined && match[f] !== null) ? String(match[f]) : '')
+    lines = splitAddressLines(match.AddressFormat).map(fmt =>
+      fmt.trim().split(/\s+/).map(f => String(f).replace(/[,;:]$/, ''))
+        .map(f => (match[f] !== undefined && match[f] !== null) ? String(match[f]) : '')
         .filter(Boolean).join(' ').trim()
     ).filter(Boolean);
   }
-  if (!lines.length && match.Address1) lines = [String(match.Address1).trim()];
+  if (!lines.length) {
+    lines = ['Address1', 'Address2', 'Address3', 'Address4', 'Address5',
+             'DeliveryAddress1', 'DeliveryAddress2', 'DeliveryAddress3']
+      .map(k => (match[k] !== undefined && match[k] !== null && String(match[k]).trim()) ? String(match[k]).trim() : '')
+      .filter(Boolean);
+  }
 
   // City, postcode and country have their own fields — keep them out of the address
   const address = lines.filter(l => {
@@ -1297,7 +1354,7 @@ function mapVerifyMatch(match) {
     if (match.CountryName && lower === String(match.CountryName).toLowerCase()) return false;
     if (country && lower === country.toLowerCase()) return false;
     return true;
-  }).join(', ') || match.Address1 || '';
+  }).join(', ') || match.Address1 || match.DeliveryAddress || '';
 
   return { address: address, city: city, postcode: postcode, country: country };
 }
@@ -1326,6 +1383,8 @@ function applyAddressToForm(result, match) {
   if (mapped.postcode) setPropertyField('postcode', mapped.postcode, true);
   if (mapped.country) setPropertyField('country', mapped.country, true);
   state.property.loqateId = match.ID || match.Id || (result && result.id) || '';
+  state.property.loqateRaw = match;          // full verify response, kept for diagnosis
+  renderLoqateRaw();
   if (match.Latitude && match.Longitude) {
     state.property.latitude = match.Latitude;
     state.property.longitude = match.Longitude;
@@ -1347,6 +1406,13 @@ function setLoqateStatus(msg, cls) {
   const el = document.getElementById('loqateStatus');
   el.textContent = msg;
   el.className = 'loqate-status' + (cls ? ' ' + cls : '');
+}
+
+function renderLoqateRaw() {
+  const el = document.getElementById('loqateRaw');
+  if (!el) return;
+  const raw = state.property && state.property.loqateRaw;
+  el.textContent = raw ? JSON.stringify(raw, null, 2) : 'No verification yet.';
 }
 
 function clearLoqateResults() {
@@ -1409,6 +1475,8 @@ async function pickLoqateAddress(item) {
     if (req !== loqateReq) return;
     // Verification unavailable — fill what the search result definitely knows
     if (item && item.text) setPropertyField('address', item.text, false);
+    state.property.loqateRaw = null;         // stale verified data would mislead
+    renderLoqateRaw();
     onDraftChanged();
     scheduleSave();
     renderSteps();
@@ -1417,6 +1485,7 @@ async function pickLoqateAddress(item) {
 }
 
 function initLoqate() {
+  renderLoqateRaw();
   const q = document.getElementById('loqateQuery');
   q.addEventListener('input', () => {
     clearTimeout(loqateTimer);
@@ -1746,6 +1815,7 @@ document.getElementById('resetBtn').addEventListener('click', () => {
   state.type = null; state.client = {}; state.property = {};
   state.details = {}; state.terms = {}; state.ref = null;
   state.status = 'draft'; state.payload = null;
+  renderLoqateRaw();
   document.querySelectorAll('#panel-client [data-key], #panel-property [data-key], #panel-terms [data-key]').forEach(el => {
     if (el.tagName === 'SELECT') el.selectedIndex = 0;
     else el.value = '';
@@ -1777,9 +1847,9 @@ window.addEventListener('beforeunload', () => {
 globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview,
   initDB, persist, missingRequired, stepComplete, accept, goTo, bindPanel, applyRestored,
   onDraftChanged, renderReadiness,
-  loqateFind, loqateVerify, mapVerifyMatch, applyAddressToForm, currentIso,
+  loqateFind, loqateVerify, batchResult, mapVerifyMatch, applyAddressToForm, currentIso,
   renderLoqateResults, clearLoqateResults, searchLoqate, pickLoqateAddress, initLoqate,
-  handleFieldInput, LOQATE_DEFAULT_KEY,
+  handleFieldInput, renderLoqateRaw, LOQATE_DEFAULT_KEY,
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
 
