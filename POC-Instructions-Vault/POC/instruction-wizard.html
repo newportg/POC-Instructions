@@ -199,6 +199,10 @@ p { margin-bottom: 1rem; color: var(--text-dim); }
 .field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
 .field.invalid .err { display: block; }
 .field.hidden { display: none; }
+.field.verified-fill input, .field.verified-fill select {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+}
 
 /* Loqate address search */
 .loqate-box {
@@ -1136,7 +1140,10 @@ function handleFieldInput(el, stateKey, after) {
   const f = el.closest('.field');
   let v = (isNum && el.value !== '') ? Number(el.value) : el.value;
   state[stateKey][el.dataset.key] = v;
-  if (f) f.classList.remove('invalid');
+  if (f) {
+    f.classList.remove('invalid');
+    f.classList.remove('verified-fill');   // edited by hand — no longer the verified value
+  }
   onDraftChanged();
   scheduleSave();
   renderSteps();
@@ -1238,8 +1245,13 @@ async function loqateVerify(result, iso) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   });
+  if (res && res.ok === false) throw new Error('HTTP ' + res.status);
   const data = await res.json();
-  const item = Array.isArray(data) ? data[0] : (data && data.Items ? data.Items[0] : null);
+  // Batch responses come as an array, an {Items:[…]} envelope, or a bare match object
+  let item = null;
+  if (Array.isArray(data)) item = data[0];
+  else if (data && data.Items && data.Items[0]) item = data.Items[0];
+  else if (data && (data.Matches || data.Address1 || data.Address || data.PostalCode)) item = data;
   if (!item || item.Error) throw new Error((item && item.Description) || 'Address not found');
   return (item.Matches && item.Matches[0]) ? item.Matches[0] : item;
 }
@@ -1249,39 +1261,70 @@ function optionForCountry(name) {
   return (name && OPTION_COUNTRIES.indexOf(name) >= 0) ? name : '';
 }
 
+function resolveCountry(match) {
+  const direct = optionForCountry(match.CountryName) || optionForCountry(match.Country);
+  if (direct) return direct;
+  const iso = String(match['ISO3166-2'] || match.ISO3166_2 || match.Country || '').toUpperCase().slice(0, 2);
+  return ISO_TO_OPTION[iso] || '';
+}
+
 function mapVerifyMatch(match) {
-  let address = match.Address1 || '';
-  if (!address && match.Address) address = String(match.Address).split(/<br\s*\/?>/i)[0].trim();
   const postcode = match.PostalCode || match.PostalCodePrimary || '';
+  const country = resolveCountry(match);
   let city = match.Locality || '';
   if (!city && match.Address2 && match.Address2 !== postcode) city = match.Address2;
   if (!city && match.AdministrativeArea && match.AdministrativeArea !== postcode) city = match.AdministrativeArea;
-  let country = optionForCountry(match.CountryName) || optionForCountry(match.Country);
-  if (!country) {
-    const iso = String(match['ISO3166-2'] || match.ISO3166_2 || match.Country || '').toUpperCase().slice(0, 2);
-    country = ISO_TO_OPTION[iso] || '';
+
+  // Address lines: the Address blob first, then AddressFormat composition, then Address1
+  let lines = [];
+  if (match.Address) {
+    lines = String(match.Address).split(/<br\s*\/?>/i).map(s => s.trim()).filter(Boolean);
   }
+  if (!lines.length && match.AddressFormat) {
+    lines = String(match.AddressFormat).split(/<br\s*\/?>/i).map(fmt =>
+      fmt.trim().split(/\s+/).map(f => (match[f] !== undefined && match[f] !== null) ? String(match[f]) : '')
+        .filter(Boolean).join(' ').trim()
+    ).filter(Boolean);
+  }
+  if (!lines.length && match.Address1) lines = [String(match.Address1).trim()];
+
+  // City, postcode and country have their own fields — keep them out of the address
+  const address = lines.filter(l => {
+    const lower = l.toLowerCase();
+    if (postcode && lower.indexOf(postcode.toLowerCase()) >= 0) return false;
+    if (city && lower === city.toLowerCase()) return false;
+    if (match.AdministrativeArea && lower === String(match.AdministrativeArea).toLowerCase()) return false;
+    if (match.CountryName && lower === String(match.CountryName).toLowerCase()) return false;
+    if (country && lower === country.toLowerCase()) return false;
+    return true;
+  }).join(', ') || match.Address1 || '';
+
   return { address: address, city: city, postcode: postcode, country: country };
 }
 
-/* Fill one Property field (state + input + validation flag) */
-function setPropertyField(key, value) {
+/* Fill one Property field (state + input + validation flag).
+   verified=true marks the field green as "filled from Loqate Verify". */
+function setPropertyField(key, value, verified) {
   if (value === undefined || value === null) value = '';
   state.property[key] = value;
   const el = document.querySelector('#panel-property [data-key="' + key + '"]');
   if (el) {
     el.value = String(value);
     const f = el.closest('.field');
-    if (f) f.classList.remove('invalid');
+    if (f) {
+      f.classList.remove('invalid');
+      if (verified) f.classList.add('verified-fill');
+      else f.classList.remove('verified-fill');
+    }
   }
 }
 
 function applyAddressToForm(result, match) {
   const mapped = mapVerifyMatch(match);
-  if (mapped.address) setPropertyField('address', mapped.address);
-  if (mapped.city) setPropertyField('city', mapped.city);
-  if (mapped.postcode) setPropertyField('postcode', mapped.postcode);
-  if (mapped.country) setPropertyField('country', mapped.country);
+  if (mapped.address) setPropertyField('address', mapped.address, true);
+  if (mapped.city) setPropertyField('city', mapped.city, true);
+  if (mapped.postcode) setPropertyField('postcode', mapped.postcode, true);
+  if (mapped.country) setPropertyField('country', mapped.country, true);
   state.property.loqateId = match.ID || match.Id || (result && result.id) || '';
   if (match.Latitude && match.Longitude) {
     state.property.latitude = match.Latitude;
@@ -1364,7 +1407,12 @@ async function pickLoqateAddress(item) {
     applyAddressToForm(item, match);
   } catch (e) {
     if (req !== loqateReq) return;
-    setLoqateStatus('Verify failed: ' + e.message, 'error');
+    // Verification unavailable — fill what the search result definitely knows
+    if (item && item.text) setPropertyField('address', item.text, false);
+    onDraftChanged();
+    scheduleSave();
+    renderSteps();
+    setLoqateStatus('Verify failed (' + e.message + ') — street line filled from the search result; check city/postcode/country.', 'error');
   }
 }
 
@@ -1730,7 +1778,8 @@ globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview
   initDB, persist, missingRequired, stepComplete, accept, goTo, bindPanel, applyRestored,
   onDraftChanged, renderReadiness,
   loqateFind, loqateVerify, mapVerifyMatch, applyAddressToForm, currentIso,
-  renderLoqateResults, clearLoqateResults, searchLoqate, initLoqate, LOQATE_DEFAULT_KEY,
+  renderLoqateResults, clearLoqateResults, searchLoqate, pickLoqateAddress, initLoqate,
+  handleFieldInput, LOQATE_DEFAULT_KEY,
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
 
