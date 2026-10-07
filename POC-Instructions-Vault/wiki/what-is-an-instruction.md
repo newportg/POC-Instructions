@@ -9,6 +9,8 @@ In real estate the term is used in a few related ways:
 - **Lender's instruction** — a mortgage lender instructs its panel solicitor to act on the loan, often alongside the borrower's own instruction.
 - **Broker instruction** — a client instructs a mortgage or insurance broker to arrange a product.
 
+Full breakdown, including the CRM's service-line variants: [[types-of-instruction]].
+
 An instruction is not the same as an enquiry or a lead. It is an authorisation: it creates the duty to act, defines its limits, and usually commits the client to fees.
 
 ## What makes up an instruction
