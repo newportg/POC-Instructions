@@ -984,13 +984,23 @@ function missingRequired() {
   return miss;
 }
 
+/* Per-step completeness for the step bar:
+   - details only counts as complete once a type is chosen AND its required fields are filled
+   - review only counts as complete when every other step is complete */
+function stepComplete(id, miss) {
+  if (id === 'type') return !!state.type;
+  if (id === 'details') return !!state.type && !miss.details;
+  if (id === 'review') return Object.keys(miss).length === 0;
+  return !miss[id];
+}
+
 function renderSteps() {
   const bar = document.getElementById('steps');
   const miss = missingRequired();
   bar.innerHTML = '';
   STEPS.forEach((s, i) => {
     const el = document.createElement('div');
-    const complete = s.id === 'review' || !miss[s.id];
+    const complete = stepComplete(s.id, miss);
     el.className = 'step-pill' +
       (i === state.step ? ' active' : '') +
       (complete && i !== state.step ? ' done' : '');
@@ -1226,7 +1236,9 @@ function renderReadiness() {
   const wrap = document.getElementById('readiness');
   wrap.innerHTML = '';
   STEPS.slice(0, 5).forEach((s, i) => {
-    const m = miss[s.id];
+    let m = miss[s.id];
+    // details cannot be judged before a type is chosen — never show it green then
+    if (s.id === 'details' && !state.type) m = ['instruction type not selected'];
     const div = document.createElement('div');
     div.className = 'readiness-row ' + (m ? 'missing' : 'ok');
     div.innerHTML =
@@ -1236,6 +1248,14 @@ function renderReadiness() {
     div.querySelector('.jump').addEventListener('click', () => goTo(i));
     wrap.appendChild(div);
   });
+
+  // Acceptance gate: the button is only usable when every criterion is green
+  const missing = Object.keys(miss).length > 0;
+  const btn = document.getElementById('acceptBtn');
+  btn.disabled = missing;
+  btn.title = missing
+    ? 'Complete the required information shown above before accepting'
+    : 'All required information is present';
 }
 
 function renderReview() {
@@ -1408,7 +1428,7 @@ window.addEventListener('beforeunload', () => {
 
 /* Exposed for tests */
 globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview,
-  initDB, persist, missingRequired, accept, goTo, bindPanel, applyRestored,
+  initDB, persist, missingRequired, stepComplete, accept, goTo, bindPanel, applyRestored,
   onDraftChanged, renderReadiness,
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
