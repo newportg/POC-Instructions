@@ -412,6 +412,13 @@ pre code { color: var(--text); }
         <p>The party giving the instruction and their contact.</p>
       </div>
     </div>
+    <div class="loqate-row">
+      <input type="text" id="clientLookup" autocomplete="off"
+             placeholder="Search mock clients by name, contact or country, e.g. Whitfield">
+      <span class="badge badge-poc">MOCK DATA</span>
+    </div>
+    <div class="loqate-status" id="clientLookupStatus">Local directory of 15 private and corporate clients — UK, Spain, France, Germany, Poland. Type 2+ characters, pick one to fill the fields below.</div>
+    <ul class="loqate-results" id="clientLookupResults"></ul>
     <div class="form-grid">
       <div class="field">
         <label for="clientName">Client name <span class="req">*</span></label>
@@ -1538,6 +1545,146 @@ function initLoqate() {
   });
 }
 
+/* ============================================================
+   Mock client lookup — local directory, no network
+   15 private and corporate clients across the UK, Spain,
+   France, Germany and Poland; picking one fills the tab.
+   ============================================================ */
+const MOCK_CLIENTS = [
+  { country: 'United Kingdom', clientName: 'Thames Quay Estates Ltd', partyType: 'Company',
+    contactName: 'Sarah Caldwell', contactEmail: 's.caldwell@thamesquay.co.uk',
+    contactPhone: '+44 20 7946 0312', legalEntity: 'Thames Quay Estates Limited' },
+  { country: 'United Kingdom', clientName: 'Eleanor Whitfield', partyType: 'Individual',
+    contactName: 'Eleanor Whitfield', contactEmail: 'e.whitfield@whitfieldfamily.co.uk',
+    contactPhone: '+44 7700 900418', legalEntity: 'Whitfield Family Office Ltd' },
+  { country: 'United Kingdom', clientName: 'Blackfriars Asset Management LLP', partyType: 'Company',
+    contactName: 'David Ngata', contactEmail: 'd.ngata@blackfriarsam.co.uk',
+    contactPhone: '+44 161 496 0277', legalEntity: 'Blackfriars Asset Management LLP' },
+
+  { country: 'Spain', clientName: 'Costa Azul Desarrollos S.L.', partyType: 'Company',
+    contactName: 'Marta Vega Ortiz', contactEmail: 'm.vega@costaazul.es',
+    contactPhone: '+34 96 583 12 40', legalEntity: 'Costa Azul Desarrollos S.L.' },
+  { country: 'Spain', clientName: 'Diego Herrera Salas', partyType: 'Individual',
+    contactName: 'Diego Herrera Salas', contactEmail: 'd.herrera@herrerafamilia.es',
+    contactPhone: '+34 678 91 23 45', legalEntity: 'Herrera Inversiones Familiares S.L.' },
+  { country: 'Spain', clientName: 'Sierra Norte Gestión Inmobiliaria S.L.', partyType: 'Company',
+    contactName: 'Carlos Ibáñez', contactEmail: 'c.ibanez@sierranorte.es',
+    contactPhone: '+34 91 456 78 90', legalEntity: 'Sierra Norte Gestión Inmobiliaria S.L.' },
+
+  { country: 'France', clientName: 'Haussmann Gestion SAS', partyType: 'Company',
+    contactName: 'Antoine Lefèvre', contactEmail: 'a.lefevre@haussmanngestion.fr',
+    contactPhone: '+33 1 42 68 53 09', legalEntity: 'Haussmann Gestion SAS' },
+  { country: 'France', clientName: 'Camille Moreau Dupont', partyType: 'Individual',
+    contactName: 'Camille Moreau Dupont', contactEmail: 'c.moreau@moreau-patrimoine.fr',
+    contactPhone: '+33 6 12 34 56 78', legalEntity: 'Moreau Patrimoine SAS' },
+  { country: 'France', clientName: 'Loire Valley Capital SAS', partyType: 'Company',
+    contactName: 'Nathalie Petit', contactEmail: 'n.petit@loirevalleycapital.fr',
+    contactPhone: '+33 4 72 10 45 33', legalEntity: 'Loire Valley Capital SAS' },
+
+  { country: 'Germany', clientName: 'Rheinblick Immobilien GmbH', partyType: 'Company',
+    contactName: 'Katrin Vogel', contactEmail: 'k.vogel@rheinblick.de',
+    contactPhone: '+49 30 2887 4410', legalEntity: 'Rheinblick Immobilien GmbH' },
+  { country: 'Germany', clientName: 'Jonas Lehmann', partyType: 'Individual',
+    contactName: 'Jonas Lehmann', contactEmail: 'jonas.lehmann@lehmann-gut.de',
+    contactPhone: '+49 151 2345 6789', legalEntity: 'Lehmann Privatvermögen GbR' },
+  { country: 'Germany', clientName: 'Elbterra Bau GmbH', partyType: 'Company',
+    contactName: 'Markus Reinhardt', contactEmail: 'm.reinhardt@elbterra.de',
+    contactPhone: '+49 40 9876 5432', legalEntity: 'Elbterra Bau GmbH' },
+
+  { country: 'Poland', clientName: 'Wisła Development Sp. z o.o.', partyType: 'Company',
+    contactName: 'Katarzyna Nowak', contactEmail: 'k.nowak@wisladevelopment.pl',
+    contactPhone: '+48 22 123 45 67', legalEntity: 'Wisła Development Sp. z o.o.' },
+  { country: 'Poland', clientName: 'Agnieszka Wójcik', partyType: 'Individual',
+    contactName: 'Agnieszka Wójcik', contactEmail: 'a.wojcik@onet.pl',
+    contactPhone: '+48 501 234 567', legalEntity: 'Wójcik Nieruchomości Sp. z o.o.' },
+  { country: 'Poland', clientName: 'Baltic Towers Sp. z o.o.', partyType: 'Company',
+    contactName: 'Tomasz Lewandowski', contactEmail: 't.lewandowski@baltictowers.pl',
+    contactPhone: '+48 58 765 432 10', legalEntity: 'Baltic Towers Sp. z o.o.' }
+];
+
+const CLIENT_FIELDS = ['clientName', 'partyType', 'contactName', 'contactEmail', 'contactPhone', 'legalEntity'];
+let clientLookupHint = '';
+
+function setClientLookupStatus(msg, cls) {
+  const el = document.getElementById('clientLookupStatus');
+  el.textContent = msg;
+  el.className = 'loqate-status' + (cls ? ' ' + cls : '');
+}
+
+function clearClientResults() {
+  document.getElementById('clientLookupResults').innerHTML = '';
+}
+
+function findMockClients(q) {
+  const t = String(q || '').trim().toLowerCase();
+  if (t.length < 2) return [];
+  return MOCK_CLIENTS.filter(c =>
+    [c.clientName, c.contactName, c.contactEmail, c.legalEntity, c.country]
+      .some(v => String(v).toLowerCase().indexOf(t) >= 0));
+}
+
+function renderClientResults(items) {
+  const ul = document.getElementById('clientLookupResults');
+  ul.innerHTML = '';
+  if (!items.length) {
+    setClientLookupStatus('No mock clients match that search.', 'error');
+    return;
+  }
+  items.forEach(c => {
+    const li = document.createElement('li');
+    const t = document.createElement('div');
+    t.className = 'lr-text';
+    t.textContent = c.clientName;
+    const d = document.createElement('div');
+    d.className = 'lr-desc';
+    d.textContent = (c.partyType === 'Individual' ? 'Private client' : 'Corporate client') +
+      ' · ' + c.country + ' · ' + c.contactName + ' · ' + c.contactEmail;
+    li.appendChild(t);
+    li.appendChild(d);
+    li.addEventListener('click', () => pickMockClient(c));
+    ul.appendChild(li);
+  });
+  setClientLookupStatus(items.length + (items.length === 1 ? ' match — pick one to fill the form' : ' matches — pick one to fill the form'), '');
+}
+
+function pickMockClient(c) {
+  CLIENT_FIELDS.forEach(k => {
+    state.client[k] = c[k];
+    const el = document.querySelector('#panel-client [data-key="' + k + '"]');
+    if (el) {
+      el.value = String(c[k]);
+      const f = el.closest('.field');
+      if (f) f.classList.remove('invalid');
+    }
+  });
+  clearClientResults();
+  const input = document.getElementById('clientLookup');
+  if (input) input.value = c.clientName;
+  setClientLookupStatus('Filled from mock directory: ' + c.clientName + ' (' +
+    (c.partyType === 'Individual' ? 'private' : 'corporate') + ', ' + c.country + ').', 'ok');
+  onDraftChanged();
+  scheduleSave();
+  renderSteps();
+}
+
+function initClientLookup() {
+  clientLookupHint = document.getElementById('clientLookupStatus').textContent;
+  const input = document.getElementById('clientLookup');
+  let timer = null;
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      const q = input.value.trim();
+      if (q.length < 2) {
+        clearClientResults();
+        setClientLookupStatus(clientLookupHint, '');
+        return;
+      }
+      renderClientResults(findMockClients(q));
+    }, 250);
+  });
+}
+
 /* ---------- Step 4: dynamic details fields ---------- */
 function renderDetails() {
   const wrap = document.getElementById('detailsFields');
@@ -1874,6 +2021,7 @@ bindPanel('panel-client', 'client');
 bindPanel('panel-property', 'property');
 bindPanel('panel-terms', 'terms');
 initLoqate();
+initClientLookup();
 goTo(0);
 initDB();
 
@@ -1889,6 +2037,7 @@ globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview
   currentCountry, resolveCountry, matchIso,
   renderLoqateResults, clearLoqateResults, searchLoqate, pickLoqateAddress, initLoqate,
   handleFieldInput, renderLoqateRaw, LOQATE_DEFAULT_KEY,
+  MOCK_CLIENTS, findMockClients, pickMockClient, initClientLookup,
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
 
