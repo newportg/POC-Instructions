@@ -467,7 +467,7 @@ pre code { color: var(--text); }
         <input type="text" id="loqateQuery" autocomplete="off"
                placeholder="Postcode or street address, e.g. EC2M 7NH">
       </div>
-      <div class="loqate-status" id="loqateStatus">Type at least 3 characters — pick a suggestion to verify and fill the fields below (Find + Verify, as in POC-Address).</div>
+      <div class="loqate-status" id="loqateStatus">Pick the country below first, then type at least 3 characters — pick a suggestion to verify and fill the fields below (Find + Verify, as in POC-Address).</div>
       <ul class="loqate-results" id="loqateResults"></ul>
       <details class="loqate-key">
         <summary>API key</summary>
@@ -1211,10 +1211,12 @@ try {
 } catch (e) { /* storage unavailable */ }
 
 /* Country of the search: the Property tab's country select drives the Countries param */
-function currentIso() {
+function currentCountry() {
   const sel = document.getElementById('country');
-  const name = (sel && sel.value) || state.property.country || '';
-  return COUNTRY_ISO[name];
+  return (sel && sel.value) || state.property.country || '';
+}
+function currentIso() {
+  return COUNTRY_ISO[currentCountry()];
 }
 
 /* Find: GET + recursive Container drill-down until items are Addresses */
@@ -1304,8 +1306,23 @@ function optionForCountry(name) {
 function resolveCountry(match) {
   const direct = optionForCountry(match.CountryName) || optionForCountry(match.Country);
   if (direct) return direct;
-  const iso = String(match['ISO3166-2'] || match.ISO3166_2 || match.Country || '').toUpperCase().slice(0, 2);
-  return ISO_TO_OPTION[iso] || '';
+  // Only a code-shaped value is an ISO code — slicing a full name
+  // ("French Southern Territories" → "FR") would pick the wrong country.
+  const raw = String(match['ISO3166-2'] || match.ISO3166_2 || match.Country || '').trim();
+  if (/^[A-Za-z]{2}(-[A-Za-z0-9]{1,3})?$/.test(raw)) {
+    return ISO_TO_OPTION[raw.toUpperCase().slice(0, 2)] || '';
+  }
+  return '';
+}
+
+/* ISO code of the country a verify match belongs to ('' when unknown) */
+function matchIso(match) {
+  const raw = String(match['ISO3166-2'] || match.ISO3166_2 || '').trim();
+  if (raw) return raw.toUpperCase().slice(0, 2);
+  const c = String(match.Country || '').trim();
+  if (/^[A-Za-z]{2}$/.test(c)) return c.toUpperCase();
+  const name = optionForCountry(match.CountryName) || optionForCountry(c);
+  return name ? COUNTRY_ISO[name] : '';
 }
 
 function splitAddressLines(s) {
@@ -1393,7 +1410,9 @@ function applyAddressToForm(result, match) {
   scheduleSave();
   renderSteps();
   setLoqateStatus(
-    'Verified: ' + [mapped.address, mapped.city, mapped.postcode].filter(Boolean).join(', '),
+    'Verified: ' + [mapped.address, mapped.city, mapped.postcode].filter(Boolean).join(', ') +
+    (!mapped.country && (match.CountryName || match.Country)
+      ? ' — matched country is not in the list, set Country manually' : ''),
     'ok'
   );
 }
@@ -1450,6 +1469,12 @@ async function searchLoqate() {
     setLoqateStatus('Type at least 3 characters to search.');
     return;
   }
+  const country = currentCountry();
+  if (!country) {
+    clearLoqateResults();
+    setLoqateStatus('Choose a country first — with no country, matches can come from anywhere (tf26rf matched French Southern Territories, not the UK).', 'error');
+    return;
+  }
   const iso = currentIso();
   setLoqateStatus('Searching Loqate' + (iso ? ' (' + iso + ')' : '') + '…');
   try {
@@ -1468,8 +1493,14 @@ async function pickLoqateAddress(item) {
   clearLoqateResults();
   setLoqateStatus('Verifying address…');
   try {
-    const match = await loqateVerify(item, currentIso());
+    const iso = currentIso();
+    const match = await loqateVerify(item, iso);
     if (req !== loqateReq) return;
+    // The selected country scopes the search — reject a match from elsewhere
+    const got = matchIso(match);
+    if (iso && got && got !== iso) {
+      throw new Error('matched ' + (match.CountryName || match.Country || got) + ' instead of ' + iso);
+    }
     applyAddressToForm(item, match);
   } catch (e) {
     if (req !== loqateReq) return;
@@ -1490,6 +1521,13 @@ function initLoqate() {
   q.addEventListener('input', () => {
     clearTimeout(loqateTimer);
     loqateTimer = setTimeout(searchLoqate, 400);
+  });
+  // Changing the country rescopes the search — rerun it when a query is present
+  document.getElementById('country').addEventListener('change', () => {
+    if (q.value.trim().length >= 3) {
+      clearTimeout(loqateTimer);
+      searchLoqate();
+    }
   });
   const keyInput = document.getElementById('loqateKey');
   keyInput.value = loqateKey;
@@ -1848,6 +1886,7 @@ globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview
   initDB, persist, missingRequired, stepComplete, accept, goTo, bindPanel, applyRestored,
   onDraftChanged, renderReadiness,
   loqateFind, loqateVerify, batchResult, mapVerifyMatch, applyAddressToForm, currentIso,
+  currentCountry, resolveCountry, matchIso,
   renderLoqateResults, clearLoqateResults, searchLoqate, pickLoqateAddress, initLoqate,
   handleFieldInput, renderLoqateRaw, LOQATE_DEFAULT_KEY,
   getDb: () => db, getUserTouched: () => userTouched };
