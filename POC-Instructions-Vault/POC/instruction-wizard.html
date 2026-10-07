@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create an Instruction — POC Wizard</title>
+<style>
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface2: #1a1a25;
+  --border: #2a2a3a;
+  --text: #e8e8f0;
+  --text-dim: #8888a0;
+  --accent: #6366f1;
+  --accent2: #8b5cf6;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --code-bg: #1e1e2e;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  padding: 2rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+h1 {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+h2 { font-size: 1.4rem; font-weight: 600; margin: 0 0 0.25rem; }
+h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--accent); }
+
+p { margin-bottom: 1rem; color: var(--text-dim); }
+
+.subtitle { font-size: 1.05rem; color: var(--text-dim); margin-bottom: 1.5rem; }
+
+.scope-note {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-bottom: 1.5rem;
+}
+
+/* Step pills */
+.steps {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.step-pill {
+  flex: 1;
+  min-width: 120px;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.step-pill:hover { background: var(--surface2); color: var(--text); }
+.step-pill.active { border-color: var(--accent); background: rgba(99,102,241,0.15); color: var(--text); }
+.step-pill.done { border-color: rgba(16,185,129,0.4); color: var(--success); }
+.step-pill .num {
+  width: 1.4rem; height: 1.4rem; border-radius: 999px;
+  background: var(--surface2); color: var(--text-dim);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-pill.active .num { background: var(--accent); color: #fff; }
+.step-pill.done .num { background: var(--success); color: #fff; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+.card-icon {
+  width: 40px; height: 40px; border-radius: 0.5rem;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.25rem; background: rgba(99,102,241,0.2);
+}
+.card-header p { margin: 0; font-size: 0.9rem; }
+
+/* Badges */
+.badge {
+  display: inline-block; padding: 0.15rem 0.6rem; border-radius: 999px;
+  font-size: 0.7rem; font-weight: 600; margin-right: 0.4rem;
+}
+.badge-instruction { background: rgba(99,102,241,0.2); color: var(--accent); }
+.badge-mandate { background: rgba(139,92,246,0.2); color: var(--accent2); }
+.badge-engagement { background: rgba(16,185,129,0.2); color: var(--success); }
+.badge-entity { background: rgba(245,158,11,0.2); color: var(--warning); font-family: 'SF Mono','Fira Code','Consolas',monospace; }
+.badge-poc { background: rgba(136,136,160,0.2); color: var(--text-dim); }
+
+/* Type grid */
+.type-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.type-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.type-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.type-card.selected { border-color: var(--accent); background: rgba(99,102,241,0.12); box-shadow: 0 0 0 1px var(--accent); }
+.type-card .t-icon { font-size: 1.4rem; }
+.type-card .t-name { font-weight: 600; margin: 0.4rem 0 0.25rem; }
+.type-card .t-desc { font-size: 0.8rem; color: var(--text-dim); line-height: 1.4; }
+.type-card .t-badges { margin-top: 0.5rem; }
+
+/* Forms */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; }
+.form-grid .span-2 { grid-column: span 2; }
+
+@media (max-width: 640px) { .form-grid .span-2 { grid-column: span 1; } }
+
+.field label {
+  display: block; font-size: 0.82rem; font-weight: 600;
+  margin-bottom: 0.35rem; color: var(--text);
+}
+.field .req { color: var(--danger); margin-left: 0.15rem; }
+
+.field input, .field select, .field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.field textarea { min-height: 90px; resize: vertical; }
+
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(99,102,241,0.25);
+}
+
+.field input[readonly] { color: var(--text-dim); background: var(--border); }
+.field .hint { font-size: 0.72rem; color: var(--text-dim); margin-top: 0.25rem; }
+.field .err { font-size: 0.75rem; color: var(--danger); margin-top: 0.25rem; display: none; }
+.field.invalid input, .field.invalid select, .field.invalid textarea { border-color: var(--danger); }
+.field.invalid .err { display: block; }
+.field.hidden { display: none; }
+
+/* Nav */
+.wizard-nav { display: flex; justify-content: space-between; gap: 1rem; margin-top: 1.5rem; }
+
+.btn {
+  padding: 0.6rem 1.4rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--accent); }
+.btn-primary { background: var(--accent); border-color: transparent; color: #fff; }
+.btn-primary:hover { background: var(--accent2); }
+.btn-success { background: var(--success); border-color: transparent; color: #fff; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Review */
+.review-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.review-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 0.75rem; padding: 1rem; }
+.review-card h4 {
+  font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--accent); margin-bottom: 0.75rem;
+  display: flex; justify-content: space-between; align-items: center;
+}
+.review-card h4 .edit { font-size: 0.72rem; color: var(--text-dim); cursor: pointer; text-transform: none; letter-spacing: normal; font-weight: 500; }
+.review-card h4 .edit:hover { color: var(--accent); }
+.review-row { display: flex; justify-content: space-between; gap: 1rem; padding: 0.3rem 0; font-size: 0.85rem; border-bottom: 1px solid var(--border); }
+.review-row:last-child { border-bottom: none; }
+.review-row .k { color: var(--text-dim); flex-shrink: 0; }
+.review-row .v { color: var(--text); text-align: right; font-weight: 500; word-break: break-word; }
+
+pre {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin: 1rem 0;
+}
+code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: var(--accent); }
+pre code { color: var(--text); }
+
+.success-banner {
+  display: none;
+  background: rgba(16,185,129,0.1);
+  border: 1px solid rgba(16,185,129,0.4);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+.success-banner.show { display: block; }
+.success-banner strong { color: var(--success); }
+
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+.table { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin: 0.5rem 0 1rem; }
+.table th, .table td { padding: 0.5rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border); }
+.table th { background: var(--surface2); font-weight: 600; color: var(--text); }
+
+@media (max-width: 768px) {
+  body { padding: 1rem; }
+  h1 { font-size: 1.75rem; }
+  .steps .step-pill { min-width: 90px; font-size: 0.72rem; }
+}
+</style>
+</head>
+<body>
+
+<h1>Create an Instruction</h1>
+<p class="subtitle">Guided wizard — the available fields change with the instruction type</p>
+
+<div class="scope-note">
+  <strong style="color: var(--text);">Scope:</strong> information payload only, per
+  <code>instruction-information-requirements</code>. No authority to act, KYC/AML, conflict checks,
+  statuses or stage gates — those govern acting on the instruction, not describing it.
+  Field sets are drawn from the EU CRM data model; generic fields are used where the model defines
+  no type-specific columns (<span class="badge badge-poc">POC</span>).
+</div>
+
+<div class="steps" id="steps"></div>
+
+<!-- STEP 1: TYPE -->
+<div class="step-panel active" id="panel-type">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📋</div>
+      <div>
+        <h2>What are you instructing?</h2>
+        <p>Pick the service line — this selects the entity and drives every later step.</p>
+      </div>
+    </div>
+    <div class="type-grid" id="typeGrid"></div>
+    <p class="hint" id="typeHint" style="font-size: 0.8rem; color: var(--text-dim); display: none;">
+      Each instruction links one-to-one to exactly one service-line record, chosen by
+      <code>kf_serviceline</code>.
+    </p>
+  </div>
+</div>
+
+<!-- STEP 2: CLIENT -->
+<div class="step-panel" id="panel-client">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div>
+        <h2 id="clientTitle">Who is instructing?</h2>
+        <p>The party giving the instruction and their contact.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="clientName">Client name <span class="req">*</span></label>
+        <input type="text" id="clientName" data-key="clientName" data-required placeholder="e.g. Blackstone Real Estate Partners IX L.P.">
+        <div class="err">Client name is required</div>
+      </div>
+      <div class="field">
+        <label for="partyType">Party type</label>
+        <select id="partyType" data-key="partyType">
+          <option value="Individual">Individual</option>
+          <option value="Company">Company</option>
+          <option value="Trust">Trust</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="contactName">Primary contact <span class="req">*</span></label>
+        <input type="text" id="contactName" data-key="contactName" data-required placeholder="e.g. Jane Doe">
+        <div class="err">Primary contact is required</div>
+      </div>
+      <div class="field">
+        <label for="contactEmail">Contact email</label>
+        <input type="email" id="contactEmail" data-key="contactEmail" placeholder="jane@example.com">
+      </div>
+      <div class="field">
+        <label for="contactPhone">Contact phone</label>
+        <input type="tel" id="contactPhone" data-key="contactPhone" placeholder="+33 1 23 45 67 89">
+      </div>
+      <div class="field">
+        <label for="legalEntity">Invoicing legal entity <span class="badge badge-poc">if different</span></label>
+        <input type="text" id="legalEntity" data-key="legalEntity" placeholder="e.g. Blackstone SPA France">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 3: PROPERTY -->
+<div class="step-panel" id="panel-property">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🏠</div>
+      <div>
+        <h2>Which property?</h2>
+        <p>The subject property of the instruction.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field span-2">
+        <label for="address">Address <span class="req">*</span></label>
+        <input type="text" id="address" data-key="address" data-required placeholder="e.g. 1 Liverpool Street">
+        <div class="err">Address is required</div>
+      </div>
+      <div class="field">
+        <label for="city">City / locality <span class="req">*</span></label>
+        <input type="text" id="city" data-key="city" data-required placeholder="e.g. London">
+        <div class="err">City is required</div>
+      </div>
+      <div class="field">
+        <label for="postcode">Postcode <span class="req">*</span></label>
+        <input type="text" id="postcode" data-key="postcode" data-required placeholder="e.g. EC2M 7NH">
+        <div class="err">Postcode is required</div>
+      </div>
+      <div class="field">
+        <label for="country">Country <span class="req">*</span></label>
+        <select id="country" data-key="country" data-required>
+          <option value="">Select…</option>
+          <option>France</option>
+          <option>Germany</option>
+          <option>Spain</option>
+          <option>Poland</option>
+          <option>United Kingdom</option>
+          <option>Netherlands</option>
+          <option>Other</option>
+        </select>
+        <div class="err">Country is required</div>
+      </div>
+      <div class="field">
+        <label for="titleNumber">Title number</label>
+        <input type="text" id="titleNumber" data-key="titleNumber" placeholder="e.g. MX482917">
+      </div>
+      <div class="field">
+        <label for="tenure">Tenure</label>
+        <select id="tenure" data-key="tenure">
+          <option>Freehold</option>
+          <option>Leasehold</option>
+        </select>
+      </div>
+      <div class="field hidden" id="leaseTermField">
+        <label for="leaseTerm">Lease term</label>
+        <input type="text" id="leaseTerm" data-key="leaseTerm" placeholder="e.g. 125 years from 2010">
+      </div>
+      <div class="field">
+        <label for="propertySector">Sector</label>
+        <select id="propertySector" data-key="propertySector">
+          <option>Office</option>
+          <option>Retail</option>
+          <option>Industrial</option>
+          <option>Logistics</option>
+          <option>Residential</option>
+          <option>Land</option>
+          <option>Other</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4: DETAILS (dynamic) -->
+<div class="step-panel" id="panel-details">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">📝</div>
+      <div>
+        <h2 id="detailsTitle">Instruction details</h2>
+        <p id="detailsSub">Fields specific to the selected instruction type.</p>
+      </div>
+    </div>
+    <div class="form-grid" id="detailsFields"></div>
+  </div>
+</div>
+
+<!-- STEP 5: TERMS -->
+<div class="step-panel" id="panel-terms">
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">💼</div>
+      <div>
+        <h2>Commercial terms &amp; assignment</h2>
+        <p>Fees, currency, and who handles the instruction.</p>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label for="feeBasis">Fee basis <span class="req">*</span></label>
+        <select id="feeBasis" data-key="feeBasis" data-required>
+          <option value="">Select…</option>
+          <option>Fixed fee</option>
+          <option>Hourly rate</option>
+          <option>Percentage</option>
+        </select>
+        <div class="err">Fee basis is required</div>
+      </div>
+      <div class="field">
+        <label for="feeAmount">Fee amount</label>
+        <input type="number" id="feeAmount" data-key="feeAmount" data-num step="0.01" min="0" placeholder="e.g. 15000">
+      </div>
+      <div class="field">
+        <label for="currency">Currency <span class="req">*</span></label>
+        <select id="currency" data-key="currency" data-required>
+          <option value="">Select…</option>
+          <option>EUR</option>
+          <option>GBP</option>
+          <option>USD</option>
+          <option>PLN</option>
+        </select>
+        <div class="err">Currency is required</div>
+      </div>
+      <div class="field">
+        <label for="expectedRevenue">Expected revenue</label>
+        <input type="number" id="expectedRevenue" data-key="expectedRevenue" data-num step="0.01" min="0" placeholder="e.g. 42000">
+      </div>
+      <div class="field">
+        <label for="assignedTo">Assigned to <span class="req">*</span></label>
+        <input type="text" id="assignedTo" data-key="assignedTo" data-required placeholder="Negotiator / valuer / fee earner">
+        <div class="err">Assigned handler is required</div>
+      </div>
+      <div class="field">
+        <label for="owningOffice">Owning office <span class="req">*</span></label>
+        <input type="text" id="owningOffice" data-key="owningOffice" data-required placeholder="e.g. Paris">
+        <div class="err">Owning office is required</div>
+      </div>
+      <div class="field span-2">
+        <label for="notes">Notes</label>
+        <textarea id="notes" data-key="notes" placeholder="Anything exceptional about this matter"></textarea>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 6: REVIEW -->
+<div class="step-panel" id="panel-review">
+  <div class="success-banner" id="successBanner">
+    <strong id="successRef">Instruction created.</strong>
+    <span style="color: var(--text-dim);"> Demo only — nothing is persisted. The record payload is below.</span>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">✅</div>
+      <div>
+        <h2>Review</h2>
+        <p>Check the instruction before creating it. Use the edit links to jump back.</p>
+      </div>
+    </div>
+    <div class="review-grid" id="reviewGrid"></div>
+    <div class="wizard-nav">
+      <button class="btn" id="backBtnReview">Back</button>
+      <div style="display: flex; gap: 0.75rem;">
+        <button class="btn" id="resetBtn">Start over</button>
+        <button class="btn btn-primary" id="createBtn">Create instruction</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="jsonCard" style="display: none;">
+    <div class="card-header">
+      <div class="card-icon" style="background: rgba(245,158,11,0.2);">{ }</div>
+      <div>
+        <h3 style="margin: 0;">Record payload</h3>
+        <p style="margin: 0;">Core <code>kf_Instruction</code> plus the type's specialised record</p>
+      </div>
+    </div>
+    <p style="font-size: 0.8rem;">POC simplification: contacts and property are inline values, not resolved lookups; statuses and stage fields are omitted by design.</p>
+    <pre><code id="jsonOut">{}</code></pre>
+    <div style="display: flex; gap: 0.75rem;">
+      <button class="btn" id="copyBtn">Copy JSON</button>
+    </div>
+  </div>
+</div>
+
+<div class="wizard-nav" id="mainNav">
+  <button class="btn" id="backBtn">Back</button>
+  <button class="btn btn-primary" id="nextBtn">Next</button>
+</div>
+
+<script>
+/* ============================================================
+   Instruction type configuration
+   Choice values from EU CRM Data Model.xlsx (raw/)
+   ============================================================ */
+const TYPES = {
+  sales: {
+    name: 'Sales Instruction', entity: 'kf_SalesInstruction', core: 'Instruction',
+    serviceLine: 'Residential Sales', icon: '🏠', role: 'Vendor',
+    desc: 'Residential sale instructions from vendors',
+    fields: [
+      { key: 'kf_instructiontype', label: 'Agency type', type: 'select', req: true,
+        opts: ['Sole Agency', 'Joint Sole Agency', 'Multi Agency', 'Private Treaty', 'Auction', 'Tender'] },
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_instructionexpiry', label: 'Instruction expiry', type: 'date' },
+      { key: 'kf_askingprice', label: 'Asking price', type: 'number', req: true, hint: 'Agreed asking price' },
+      { key: 'kf_guidepricelow', label: 'Guide price (low)', type: 'number' },
+      { key: 'kf_guidepricehigh', label: 'Guide price (high)', type: 'number' },
+      { key: 'kf_commissionpercent', label: 'Commission %', type: 'number', req: true, suffix: '%' },
+      { key: 'kf_marketinglaunchdate', label: 'Marketing launch date', type: 'date' }
+    ]
+  },
+  lettings: {
+    name: 'Lettings Instruction', entity: 'kf_LettingsInstruction', core: 'Instruction',
+    serviceLine: 'Residential Lettings', icon: '🏡', role: 'Landlord',
+    desc: 'Residential letting instructions from landlords',
+    fields: [
+      { key: 'kf_instructiontype', label: 'Management type', type: 'select', req: true,
+        opts: ['Sole Agency', 'Joint', 'Multi', 'Let Only', 'Let & Manage', 'Full Management'] },
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_instructionexpiry', label: 'Instruction expiry', type: 'date' },
+      { key: 'kf_weeklyrent', label: 'Asking weekly rent', type: 'number', req: true, calc: true },
+      { key: 'kf_monthlyrent', label: 'Monthly equivalent', type: 'number', readonly: true },
+      { key: 'kf_annualrent', label: 'Annual equivalent', type: 'number', readonly: true },
+      { key: 'kf_commissionpercent', label: 'Letting fee %', type: 'number', req: true, suffix: '%' },
+      { key: 'kf_managementfeepercent', label: 'Management fee %', type: 'number', suffix: '%', hideIf: 'noMgmt' },
+      { key: 'kf_mintenancyterm', label: 'Minimum tenancy term', type: 'select',
+        opts: ['6 months', '12 months', '24 months', 'Longer'] },
+      { key: 'kf_furnishing', label: 'Furnishing', type: 'select',
+        opts: ['Furnished', 'Part Furnished', 'Unfurnished'] },
+      { key: 'kf_marketinglaunchdate', label: 'Marketing launch date', type: 'date' }
+    ]
+  },
+  valuation: {
+    name: 'Valuation Instruction', entity: 'kf_ValuationInstruction', core: 'Instruction',
+    serviceLine: 'Valuations', icon: '📊', role: 'Instructing party',
+    desc: 'RICS valuations for lending, accounts, insurance, tax',
+    fields: [
+      { key: 'kf_valuationpurpose', label: 'Purpose', type: 'select', req: true,
+        opts: ['Secured Lending', 'Fund Reporting', 'Acquisition', 'Disposal', 'Insurance', 'Tax', 'Financial Statements'] },
+      { key: 'kf_valuationbasis', label: 'Valuation basis', type: 'select', req: true,
+        opts: ['Market Value', 'Market Rent', 'Fair Value', 'DRC', 'Reinstatement'] },
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_inspectiondate', label: 'Inspection date', type: 'date' },
+      { key: 'kf_reportduedate', label: 'Report due date', type: 'date', req: true },
+      { key: 'kf_fee', label: 'Agreed fee', type: 'number' }
+    ]
+  },
+  leasing: {
+    name: 'Leasing Instruction', entity: 'kf_Lease', core: 'Instruction',
+    serviceLine: 'Leasing (Commercial Agency)', icon: '🏢', role: 'Client',
+    desc: 'Commercial agency — landlord and tenant representation',
+    fields: [
+      { key: 'kf_transactiontype', label: 'Representation', type: 'select', req: true,
+        opts: ['Letting - Landlord Rep', 'Letting - Tenant Rep'] },
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_askingrent', label: 'Asking rent (pa)', type: 'number' },
+      { key: 'kf_commissionpercent', label: 'Commission %', type: 'number', suffix: '%' },
+      { key: 'kf_marketinglaunchdate', label: 'Marketing launch date', type: 'date' }
+    ]
+  },
+  capitalmarkets: {
+    name: 'Capital Markets Instruction', entity: 'kf_Deal', core: 'Instruction',
+    serviceLine: 'Capital Markets', icon: '💼', role: 'Client',
+    desc: 'Investment transactions — disposals, acquisitions, capital raising',
+    fields: [
+      { key: 'kf_transactiontype', label: 'Transaction type', type: 'select', req: true,
+        opts: ['Sale', 'Purchase', 'Letting - Landlord Rep', 'Letting - Tenant Rep', 'Debt/Finance', 'Consultancy', 'Other'] },
+      { key: 'kf_instructiondate', label: 'Instruction date (S3)', type: 'date', req: true,
+        hint: 'S3 of the 8-stage deal lifecycle' },
+      { key: 'kf_capitalvalue', label: 'Capital value', type: 'number' },
+      { key: 'kf_targetcompletiondate', label: 'Target completion', type: 'date' }
+    ]
+  },
+  capitaladvisory: {
+    name: 'Capital Advisory Mandate', entity: 'kf_DebtMandate', core: 'Mandate',
+    serviceLine: 'Capital Advisory', icon: '🏦', role: 'Client',
+    desc: 'Debt and structured finance — senior, mezzanine, development',
+    fields: [
+      { key: 'kf_financetype', label: 'Finance type', type: 'select', req: true,
+        opts: ['Senior Debt', 'Mezzanine', 'Development Finance', 'Refinancing'] },
+      { key: 'kf_instructiondate', label: 'Mandate date', type: 'date', req: true },
+      { key: 'kf_loanamount', label: 'Target loan amount', type: 'number', req: true },
+      { key: 'kf_targetdrawdowndate', label: 'Target drawdown', type: 'date' }
+    ]
+  },
+  investoryadvisory: {
+    name: 'Investor Advisory Mandate', entity: 'kf_InvestorMandate', core: 'Mandate',
+    serviceLine: 'Investor Advisory', icon: '📈', role: 'Client',
+    desc: 'Investment strategy, deal sourcing, portfolio reporting',
+    fields: [
+      { key: 'kf_instructiondate', label: 'Mandate date', type: 'date', req: true },
+      { key: 'kf_scopework', label: 'Scope of work', type: 'textarea', req: true,
+        hint: 'Strategy brief / sourcing mandate / reporting scope' },
+      { key: 'kf_targetreportdate', label: 'First report due', type: 'date' }
+    ]
+  },
+  propertymgmt: {
+    name: 'Property Management Mandate', entity: 'kf_PropertyMandate', core: 'Mandate',
+    serviceLine: 'Property Management', icon: '🔧', role: 'Client',
+    desc: 'Lease administration, service charges, maintenance, rent collection',
+    fields: [
+      { key: 'kf_instructiondate', label: 'Mandate date', type: 'date', req: true },
+      { key: 'kf_portfoliosize', label: 'Units / leases managed', type: 'number' },
+      { key: 'kf_scopework', label: 'Scope of work', type: 'textarea', req: true }
+    ]
+  },
+  oss: {
+    name: 'OSS Engagement', entity: 'kf_Engagement', core: 'Engagement',
+    serviceLine: 'Occupier Strategy & Solutions', icon: '🧭', role: 'Client',
+    desc: 'Corporate occupier advisory — workplace strategy, location search, lease negotiation',
+    fields: [
+      { key: 'kf_engagementtype', label: 'Engagement type', type: 'select', req: true,
+        opts: ['Location Search', 'Lease Negotiation', 'Portfolio Optimisation', 'Workplace Strategy'] },
+      { key: 'kf_instructiondate', label: 'Brief date', type: 'date', req: true },
+      { key: 'kf_scopework', label: 'Scope of work', type: 'textarea', req: true },
+      { key: 'kf_targetcompletiondate', label: 'Target completion', type: 'date' }
+    ]
+  },
+  workplace: {
+    name: 'Workplace Engagement', entity: 'kf_WorkplaceAssessment', core: 'Engagement',
+    serviceLine: 'Workplace Consulting', icon: '🪑', role: 'Client',
+    desc: 'Space utilisation, workplace design, change management',
+    fields: [
+      { key: 'kf_instructiondate', label: 'Brief date', type: 'date', req: true },
+      { key: 'kf_scopework', label: 'Scope of work', type: 'textarea', req: true },
+      { key: 'kf_reportduedate', label: 'Report due date', type: 'date' }
+    ]
+  },
+  esg: {
+    name: 'ESG Engagement', entity: 'kf_ESGAssessment', core: 'Engagement',
+    serviceLine: 'ESG Consultancy', icon: '🌱', role: 'Client',
+    desc: 'Energy audits, CRREM analysis, net-zero pathways, certifications',
+    fields: [
+      { key: 'kf_assessmenttype', label: 'Assessment type', type: 'select', req: true,
+        opts: ['Energy Audit', 'CRREM Analysis', 'Net Zero Pathway', 'Certification'] },
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_reportduedate', label: 'Report due date', type: 'date' }
+    ]
+  },
+  buildingconsult: {
+    name: 'Building Consultancy Engagement', entity: 'kf_BuildingSurvey', core: 'Engagement',
+    serviceLine: 'Building Consultancy', icon: '🧱', role: 'Client',
+    desc: 'Surveys, dilapidations, project monitoring, technical due diligence',
+    fields: [
+      { key: 'kf_surveytype', label: 'Survey type', type: 'select', req: true,
+        opts: ['Building Survey', 'Dilapidations', 'Project Monitoring', 'Technical Due Diligence'] },
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_inspectiondate', label: 'Inspection date', type: 'date' }
+    ]
+  },
+  development: {
+    name: 'Development Engagement', entity: 'kf_DevelopmentProject', core: 'Engagement',
+    serviceLine: 'Development Consultancy', icon: '🏗️', role: 'Client',
+    desc: 'Feasibility, planning strategy, development management',
+    fields: [
+      { key: 'kf_instructiondate', label: 'Instruction date', type: 'date', req: true },
+      { key: 'kf_scopework', label: 'Scope of work', type: 'textarea', req: true },
+      { key: 'kf_targetcompletiondate', label: 'Target completion', type: 'date' }
+    ]
+  }
+};
+
+const STEPS = [
+  { id: 'type', label: 'Type' },
+  { id: 'client', label: 'Client' },
+  { id: 'property', label: 'Property' },
+  { id: 'details', label: 'Details' },
+  { id: 'terms', label: 'Terms' },
+  { id: 'review', label: 'Review' }
+];
+
+const state = {
+  type: null,
+  client: {},
+  property: {},
+  details: {},
+  terms: {},
+  step: 0,
+  maxStep: 0,
+  ref: null
+};
+
+/* ---------- Step bar ---------- */
+function renderSteps() {
+  const bar = document.getElementById('steps');
+  bar.innerHTML = '';
+  STEPS.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'step-pill' + (i === state.step ? ' active' : '') + (i < state.step || (i < state.maxStep && i !== state.step) ? ' done' : '');
+    el.innerHTML = '<span class="num">' + (i + 1) + '</span>' + s.label;
+    el.addEventListener('click', () => { if (i <= state.maxStep) goTo(i); });
+    bar.appendChild(el);
+  });
+}
+
+function goTo(i) {
+  state.step = i;
+  document.querySelectorAll('.step-panel').forEach((p, idx) => p.classList.toggle('active', idx === i));
+  document.getElementById('mainNav').style.display = i >= STEPS.length - 1 ? 'none' : 'flex';
+  document.getElementById('nextBtn').textContent = i === STEPS.length - 2 ? 'Review' : 'Next';
+  document.getElementById('backBtn').disabled = i === 0;
+  if (STEPS[i].id === 'client') updateClientTitle();
+  if (STEPS[i].id === 'details') renderDetails();
+  if (STEPS[i].id === 'review') renderReview();
+  renderSteps();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ---------- Step 1: type cards ---------- */
+function renderTypeCards() {
+  const grid = document.getElementById('typeGrid');
+  grid.innerHTML = '';
+  Object.keys(TYPES).forEach(k => {
+    const t = TYPES[k];
+    const card = document.createElement('div');
+    card.className = 'type-card' + (state.type === k ? ' selected' : '');
+    card.innerHTML =
+      '<div class="t-icon">' + t.icon + '</div>' +
+      '<div class="t-name">' + t.name + '</div>' +
+      '<div class="t-desc">' + t.desc + '</div>' +
+      '<div class="t-badges">' +
+        '<span class="badge badge-' + t.core.toLowerCase() + '">' + t.core + '</span>' +
+        '<span class="badge badge-entity">' + t.entity + '</span>' +
+      '</div>';
+    card.addEventListener('click', () => {
+      if (state.type !== k) {
+        state.type = k;
+        state.details = {};           // details belong to the previous type
+        document.getElementById('successBanner').classList.remove('show');
+        document.getElementById('jsonCard').style.display = 'none';
+      }
+      renderTypeCards();
+      document.getElementById('typeHint').style.display = 'block';
+    });
+    grid.appendChild(card);
+  });
+}
+
+/* ---------- Step 2: client title ---------- */
+function updateClientTitle() {
+  if (!state.type) return;
+  const t = TYPES[state.type];
+  document.getElementById('clientTitle').textContent = 'Who is instructing? (' + t.role + ')';
+}
+
+/* ---------- Step 4: dynamic details fields ---------- */
+function renderDetails() {
+  const wrap = document.getElementById('detailsFields');
+  wrap.innerHTML = '';
+  if (!state.type) return;
+  const t = TYPES[state.type];
+  document.getElementById('detailsTitle').textContent = t.name + ' — details';
+  document.getElementById('detailsSub').textContent =
+    t.entity + ' · ' + t.serviceLine + '. Only fields for this type are shown.';
+
+  t.fields.forEach(f => {
+    const div = document.createElement('div');
+    div.className = 'field' + (f.type === 'textarea' ? ' span-2' : '');
+    div.dataset.fieldKey = f.key;
+
+    const label = document.createElement('label');
+    label.textContent = f.label + ' ';
+    if (f.req) {
+      const r = document.createElement('span');
+      r.className = 'req'; r.textContent = '*';
+      label.appendChild(r);
+    }
+    div.appendChild(label);
+
+    let input;
+    if (f.type === 'select') {
+      input = document.createElement('select');
+      const blank = document.createElement('option');
+      blank.value = ''; blank.textContent = 'Select…';
+      input.appendChild(blank);
+      f.opts.forEach(o => {
+        const op = document.createElement('option');
+        op.textContent = o; op.value = o;
+        input.appendChild(op);
+      });
+    } else if (f.type === 'textarea') {
+      input = document.createElement('textarea');
+    } else {
+      input = document.createElement('input');
+      input.type = f.type === 'date' ? 'date' : (f.type === 'number' ? 'number' : 'text');
+      if (f.type === 'number') { input.step = '0.01'; }
+    }
+    input.dataset.key = f.key;
+    if (f.req) input.setAttribute('data-required', '');
+    if (f.type === 'number') input.setAttribute('data-num', '');
+    if (f.readonly) input.readOnly = true;
+    if (state.details[f.key] !== undefined) input.value = state.details[f.key];
+    div.appendChild(input);
+
+    if (f.suffix) {
+      input.style.marginBottom = '0';
+      const h = document.createElement('div');
+      h.className = 'hint'; h.textContent = 'in ' + f.suffix;
+      div.appendChild(h);
+    }
+    if (f.hint) {
+      const h = document.createElement('div');
+      h.className = 'hint'; h.textContent = f.hint;
+      div.appendChild(h);
+    }
+    const err = document.createElement('div');
+    err.className = 'err'; err.textContent = f.label + ' is required';
+    div.appendChild(err);
+
+    wrap.appendChild(div);
+  });
+
+  applyConditionalVisibility();
+  attachDetailListeners();
+}
+
+function applyConditionalVisibility() {
+  const t = TYPES[state.type];
+  if (!t) return;
+  const getVal = k => (state.details[k] || '');
+  t.fields.forEach(f => {
+    const div = document.querySelector('[data-field-key="' + f.key + '"]');
+    if (!div) return;
+    let hidden = false;
+    if (f.hideIf === 'noMgmt') {
+      const mt = getVal('kf_instructiontype');
+      hidden = !(mt === 'Let & Manage' || mt === 'Full Management');
+    }
+    div.classList.toggle('hidden', hidden);
+  });
+}
+
+function attachDetailListeners() {
+  document.querySelectorAll('#detailsFields input, #detailsFields select, #detailsFields textarea').forEach(el => {
+    el.addEventListener('input', () => {
+      const key = el.dataset.key;
+      const t = TYPES[state.type];
+      const f = t.fields.find(x => x.key === key);
+      state.details[key] = (f && f.type === 'number' && el.value !== '') ? Number(el.value) : el.value;
+      el.closest('.field').classList.remove('invalid');
+
+      if (key === 'kf_weeklyrent') recalcRent(el.value);
+      if (key === 'kf_instructiontype') applyConditionalVisibility();
+    });
+  });
+}
+
+function recalcRent(weekly) {
+  const w = parseFloat(weekly);
+  const m = document.querySelector('[data-key="kf_monthlyrent"]');
+  const a = document.querySelector('[data-key="kf_annualrent"]');
+  if (!m || !a) return;
+  if (!isNaN(w) && w > 0) {
+    m.value = (w * 52 / 12).toFixed(2);
+    a.value = (w * 52).toFixed(2);
+  } else { m.value = ''; a.value = ''; }
+  state.details['kf_monthlyrent'] = m.value !== '' ? Number(m.value) : '';
+  state.details['kf_annualrent'] = a.value !== '' ? Number(a.value) : '';
+}
+
+/* ---------- Generic collection + validation ---------- */
+function collect(panelId, target) {
+  document.querySelectorAll('#' + panelId + ' [data-key]').forEach(el => {
+    const f = el.closest('.field');
+    if (f && f.classList.contains('hidden')) return;
+    if (el.readOnly) return;
+    const isNum = el.hasAttribute('data-num');
+    target[el.dataset.key] = (isNum && el.value !== '') ? Number(el.value) : el.value;
+  });
+}
+
+function validate(panelId) {
+  let ok = true;
+  document.querySelectorAll('#' + panelId + ' [data-required]').forEach(el => {
+    const f = el.closest('.field');
+    if (f && f.classList.contains('hidden')) return;
+    if (String(el.value).trim() === '') {
+      f.classList.add('invalid');
+      ok = false;
+    } else {
+      f.classList.remove('invalid');
+    }
+  });
+  return ok;
+}
+
+/* ---------- Step 6: review ---------- */
+function row(k, v) {
+  if (v === undefined || v === null || v === '') return '';
+  return '<div class="review-row"><span class="k">' + k + '</span><span class="v">' + String(v) + '</span></div>';
+}
+
+function renderReview() {
+  const grid = document.getElementById('reviewGrid');
+  if (!state.type) { grid.innerHTML = ''; return; }
+  const t = TYPES[state.type];
+
+  const detailsRows = t.fields
+    .filter(f => !document.querySelector('[data-field-key="' + f.key + '"]') || !document.querySelector('[data-field-key="' + f.key + '"]').classList.contains('hidden'))
+    .map(f => row(f.label, state.details[f.key]))
+    .join('');
+
+  grid.innerHTML =
+    '<div class="review-card"><h4>Type <span class="edit" data-goto="0">edit</span></h4>' +
+      '<div style="font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem;">' + t.icon + ' ' + t.name + '</div>' +
+      row('Core type', t.core) + row('Service line', t.serviceLine) + row('Entity', t.entity) +
+    '</div>' +
+    '<div class="review-card"><h4>' + t.role + ' <span class="edit" data-goto="1">edit</span></h4>' +
+      row('Client', state.client.clientName) + row('Party type', state.client.partyType) +
+      row('Contact', state.client.contactName) + row('Email', state.client.contactEmail) +
+      row('Phone', state.client.contactPhone) + row('Invoicing entity', state.client.legalEntity) +
+    '</div>' +
+    '<div class="review-card"><h4>Property <span class="edit" data-goto="2">edit</span></h4>' +
+      row('Address', state.property.address) + row('City', state.property.city) +
+      row('Postcode', state.property.postcode) + row('Country', state.property.country) +
+      row('Title number', state.property.titleNumber) + row('Tenure', state.property.tenure) +
+      row('Lease term', state.property.leaseTerm) + row('Sector', state.property.propertySector) +
+    '</div>' +
+    '<div class="review-card"><h4>Details <span class="edit" data-goto="3">edit</span></h4>' +
+      (detailsRows || '<div class="review-row"><span class="k">—</span></div>') +
+    '</div>' +
+    '<div class="review-card"><h4>Terms <span class="edit" data-goto="4">edit</span></h4>' +
+      row('Fee basis', state.terms.feeBasis) + row('Fee amount', state.terms.feeAmount) +
+      row('Currency', state.terms.currency) + row('Expected revenue', state.terms.expectedRevenue) +
+      row('Assigned to', state.terms.assignedTo) + row('Owning office', state.terms.owningOffice) +
+      row('Notes', state.terms.notes) +
+    '</div>';
+
+  grid.querySelectorAll('.edit').forEach(e => {
+    e.addEventListener('click', () => goTo(Number(e.dataset.goto)));
+  });
+
+  document.getElementById('jsonOut').textContent = JSON.stringify(buildRecord(), null, 2);
+}
+
+function buildRecord() {
+  const t = TYPES[state.type];
+  const d = state.details;
+  const emptyToNull = v => (v === undefined || v === '' ? null : v);
+
+  const instruction = {
+    kf_name: state.ref || 'INS-??????',
+    kf_instructiontype: t.core,
+    kf_serviceline: t.serviceLine,
+    kf_clientaccountid: emptyToNull(state.client.clientName),
+    kf_legalentityaccountid: emptyToNull(state.client.legalEntity),
+    kf_primarycontactid: emptyToNull(state.client.contactName),
+    kf_propertyid: emptyToNull(
+      [state.property.address, state.property.city, state.property.postcode, state.property.country]
+        .filter(Boolean).join(', ')
+    ),
+    kf_owningoffice: emptyToNull(state.terms.owningOffice),
+    kf_startdate: emptyToNull(d.kf_instructiondate),
+    kf_expectedrevenue: emptyToNull(state.terms.expectedRevenue)
+  };
+
+  const specialised = {};
+  t.fields.forEach(f => {
+    if (f.readonly) return;
+    const v = d[f.key];
+    if (v !== undefined && v !== '') specialised[f.key] = v;
+  });
+  if (state.property.titleNumber) specialised.kf_titlenumber = state.property.titleNumber;
+  if (state.property.tenure) specialised.kf_tenure = state.property.tenure;
+  if (state.terms.assignedTo) {
+    specialised[t.entity === 'kf_ValuationInstruction' ? 'kf_valuer' : 'kf_negotiator'] = state.terms.assignedTo;
+  }
+  if (state.terms.feeAmount !== undefined && state.terms.feeAmount !== '') {
+    specialised.kf_fee = state.terms.feeAmount;
+    specialised.kf_feebasis = state.terms.feeBasis;
+    specialised.kf_currency = state.terms.currency;
+  }
+  if (state.terms.notes) specialised.kf_notes = state.terms.notes;
+
+  return { kf_Instruction: instruction, [t.entity]: specialised };
+}
+
+/* ---------- Nav ---------- */
+function next() {
+  const id = STEPS[state.step].id;
+  if (id === 'type') {
+    if (!state.type) {
+      document.getElementById('typeHint').style.display = 'block';
+      document.getElementById('typeHint').innerHTML = '<span style="color: var(--danger);">Select an instruction type to continue.</span>';
+      return;
+    }
+    document.getElementById('typeHint').innerHTML =
+      'Each instruction links one-to-one to exactly one service-line record, chosen by <code>kf_serviceline</code>.';
+  } else if (id === 'review') {
+    return;
+  } else {
+    collect('panel-' + id, state[id]);
+    if (!validate('panel-' + id)) return;
+  }
+  state.maxStep = Math.max(state.maxStep, state.step + 1);
+  goTo(state.step + 1);
+}
+
+function back() {
+  if (state.step === 0) return;
+  const id = STEPS[state.step].id;
+  if (id !== 'type' && id !== 'review') collect('panel-' + id, state[id]);
+  goTo(state.step - 1);
+}
+
+document.getElementById('nextBtn').addEventListener('click', next);
+document.getElementById('backBtn').addEventListener('click', back);
+document.getElementById('backBtnReview').addEventListener('click', back);
+
+document.getElementById('createBtn').addEventListener('click', () => {
+  if (!state.ref) {
+    state.ref = 'INS-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
+  }
+  document.getElementById('successRef').textContent = 'Instruction ' + state.ref + ' created.';
+  document.getElementById('successBanner').classList.add('show');
+  document.getElementById('jsonCard').style.display = 'block';
+  document.getElementById('jsonOut').textContent = JSON.stringify(buildRecord(), null, 2);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+document.getElementById('copyBtn').addEventListener('click', function () {
+  const txt = document.getElementById('jsonOut').textContent;
+  const btn = this;
+  const done = () => { btn.textContent = 'Copied'; setTimeout(() => btn.textContent = 'Copy JSON', 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(done).catch(done);
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = txt; document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta); done();
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  state.type = null; state.client = {}; state.property = {};
+  state.details = {}; state.terms = {}; state.maxStep = 0; state.ref = null;
+  document.querySelectorAll('#panel-client input, #panel-client select, ' +
+    '#panel-property input, #panel-property select, ' +
+    '#panel-terms input, #panel-terms select, #panel-terms textarea').forEach(el => el.value = '');
+  document.getElementById('successBanner').classList.remove('show');
+  document.getElementById('jsonCard').style.display = 'none';
+  renderTypeCards();
+  goTo(0);
+});
+
+/* Lease term visibility (property step) */
+document.getElementById('tenure').addEventListener('change', function () {
+  document.getElementById('leaseTermField').classList.toggle('hidden', this.value !== 'Leasehold');
+});
+
+/* ---------- Init ---------- */
+renderTypeCards();
+renderSteps();
+goTo(0);
+</script>
+
+</body>
+</html>
