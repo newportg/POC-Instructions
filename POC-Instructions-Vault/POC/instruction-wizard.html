@@ -606,12 +606,16 @@ pre code { color: var(--text); }
       </div>
       <div class="field">
         <label for="assignedTo">Assigned to <span class="req">*</span></label>
-        <input type="text" id="assignedTo" data-key="assignedTo" data-required placeholder="Negotiator / valuer / fee earner">
+        <select id="assignedTo" data-key="assignedTo" data-required>
+          <option value="">Select owning office first…</option>
+        </select>
         <div class="err">Assigned handler is required</div>
       </div>
       <div class="field">
         <label for="owningOffice">Owning office <span class="req">*</span></label>
-        <input type="text" id="owningOffice" data-key="owningOffice" data-required placeholder="e.g. Paris">
+        <select id="owningOffice" data-key="owningOffice" data-required>
+          <option value="">Select…</option>
+        </select>
         <div class="err">Owning office is required</div>
       </div>
       <div class="field span-2">
@@ -1024,6 +1028,15 @@ function applyRestored(r) {
   fillPanel('panel-client', state.client);
   fillPanel('panel-property', state.property);
   fillPanel('panel-terms', state.terms);
+  // Office/negotiator are selects fed from the mock directory — rebuild the
+  // negotiator options, then re-apply the saved values the fill couldn't set
+  populateOfficeSelect();
+  const office = state.terms.owningOffice || '';
+  populateNegotiatorSelect(office, state.terms.assignedTo || '');
+  document.getElementById('owningOffice').value = office;
+  if (state.terms.currency) {
+    document.getElementById('currency').dataset.auto = '1';   // still overridable
+  }
   document.getElementById('leaseTermField').classList.toggle('hidden', state.property.tenure !== 'Leasehold');
   renderLoqateRaw();
   renderSteps();
@@ -1685,6 +1698,106 @@ function initClientLookup() {
   });
 }
 
+/* ============================================================
+   Mock office directory — owning office linked to currency
+   and negotiators. Defaults by currency: UK → GBP, eurozone
+   (ES/FR/DE) → EUR, Poland → PLN. Currency is a default
+   (user can change it), not fixed.
+   ============================================================ */
+const MOCK_OFFICES = [
+  { name: 'London',     country: 'United Kingdom', currency: 'GBP', negotiators: ['Alex Johnson', 'Michael Roberts', 'Emma Davies'] },
+  { name: 'Manchester', country: 'United Kingdom', currency: 'GBP', negotiators: ['James Wilson', 'Sophie Taylor'] },
+  { name: 'Madrid',     country: 'Spain',    currency: 'EUR', negotiators: ['Miguel Fernández', 'Carmen Ruiz', 'Javier Moreno'] },
+  { name: 'Barcelona',  country: 'Spain',    currency: 'EUR', negotiators: ['Laura Martínez', 'Pablo García'] },
+  { name: 'Paris',      country: 'France',   currency: 'EUR', negotiators: ['Claire Fournier', 'Luc Dubois', 'Émilie Martin'] },
+  { name: 'Lyon',       country: 'France',   currency: 'EUR', negotiators: ['Théo Lefèvre', 'Julie Blanc'] },
+  { name: 'Berlin',     country: 'Germany',  currency: 'EUR', negotiators: ['Anna Müller', 'Thomas Becker', 'Julia Schmidt'] },
+  { name: 'Frankfurt',  country: 'Germany',  currency: 'EUR', negotiators: ['Lukas Wagner', 'Svenja Weber'] },
+  { name: 'Warsaw',     country: 'Poland',   currency: 'PLN', negotiators: ['Katarzyna Nowak', 'Piotr Kowalski', 'Anna Wiśniewska'] },
+  { name: 'Wrocław',    country: 'Poland',   currency: 'PLN', negotiators: ['Tomasz Mazur', 'Magdalena Jankowska'] }
+];
+
+function getOfficeByName(name) {
+  if (!name) return null;
+  return MOCK_OFFICES.find(o => o.name === name) || null;
+}
+
+/* Populate the owning-office select once */
+function populateOfficeSelect() {
+  const sel = document.getElementById('owningOffice');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = 'Select…';
+  sel.appendChild(ph);
+  MOCK_OFFICES.forEach(o => {
+    const op = document.createElement('option');
+    op.value = o.name;
+    op.textContent = o.name + ' (' + o.country + ')';
+    sel.appendChild(op);
+  });
+  if (current) sel.value = current;
+}
+
+/* Populate negotiator select for a given office.
+   selected (optional) is re-applied; a saved value that is not in this
+   office's list is kept as an option so a restored draft never silently
+   drops the negotiator it was saved with. */
+function populateNegotiatorSelect(officeName, selected) {
+  const sel = document.getElementById('assignedTo');
+  if (!sel) return;
+  const office = getOfficeByName(officeName);
+  const want = (selected === undefined || selected === null) ? '' : String(selected);
+  sel.innerHTML = '';
+  const ph = document.createElement('option');
+  ph.value = '';
+  ph.textContent = officeName ? 'Select negotiator…' : 'Select owning office first…';
+  sel.appendChild(ph);
+  const list = office ? office.negotiators.slice() : [];
+  if (want && list.indexOf(want) < 0) list.push(want);   // keep a saved/unknown value selectable
+  list.forEach(n => {
+    const op = document.createElement('option');
+    op.value = n;
+    op.textContent = (office && office.negotiators.indexOf(n) < 0) ? n + ' (saved)' : n;
+    sel.appendChild(op);
+  });
+  sel.value = want;
+}
+
+/* Owning office changed → set defaults (currency only if untouched/empty) */
+function onOfficeChange(officeName) {
+  const office = getOfficeByName(officeName);
+  state.terms.owningOffice = officeName || '';
+  state.terms.assignedTo = '';                 // negotiators belong to the office
+  populateNegotiatorSelect(officeName, '');
+  if (office) {
+    // Currency: default from the office, but only while the user hasn't
+    // chosen one themselves (a default, not a fixed value)
+    const currencyEl = document.getElementById('currency');
+    const userSet = currencyEl && currencyEl.dataset.touched === '1';
+    if (currencyEl && !userSet && (!currencyEl.value || currencyEl.dataset.auto === '1')) {
+      currencyEl.value = office.currency;
+      currencyEl.dataset.auto = '1';
+      state.terms.currency = office.currency;
+    }
+  }
+  // Office is chosen now; currency is valid if it has a value
+  const clearing = ['owningOffice'];
+  if (document.getElementById('currency').value) clearing.push('currency');
+  clearing.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { const f = el.closest('.field'); if (f) f.classList.remove('invalid'); }
+  });
+  // assignedTo just went empty — keep its row honest and refresh the pills
+  const negoField = document.getElementById('assignedTo').closest('.field');
+  if (negoField && !state.terms.assignedTo) negoField.classList.add('invalid');
+  onDraftChanged();
+  scheduleSave();
+  renderSteps();
+}
+
 /* ---------- Step 4: dynamic details fields ---------- */
 function renderDetails() {
   const wrap = document.getElementById('detailsFields');
@@ -2005,6 +2118,11 @@ document.getElementById('resetBtn').addEventListener('click', () => {
     if (el.tagName === 'SELECT') el.selectedIndex = 0;
     else el.value = '';
   });
+  // Negotiator options belonged to the old office; rebuild the empty state
+  populateNegotiatorSelect('', '');
+  const curEl = document.getElementById('currency');
+  delete curEl.dataset.touched;
+  curEl.dataset.auto = '0';
   document.getElementById('leaseTermField').classList.add('hidden');
   document.getElementById('successBanner').classList.remove('show');
   document.getElementById('jsonCard').style.display = 'none';
@@ -2022,6 +2140,26 @@ bindPanel('panel-property', 'property');
 bindPanel('panel-terms', 'terms');
 initLoqate();
 initClientLookup();
+/* Office → currency default + negotiator list */
+populateOfficeSelect();
+populateNegotiatorSelect('', '');
+document.getElementById('owningOffice').addEventListener('change', function () {
+  const f = this.closest('.field');
+  if (f) f.classList.remove('invalid');
+  onOfficeChange(this.value);
+});
+document.getElementById('assignedTo').addEventListener('change', function () {
+  const f = this.closest('.field');
+  if (f) f.classList.remove('invalid');
+});
+/* Currency stays user-overridable: record an explicit choice so the
+   office default never overwrites it */
+document.getElementById('currency').addEventListener('change', function () {
+  this.dataset.touched = '1';
+  this.dataset.auto = '0';
+  const f = this.closest('.field');
+  if (f && this.value) f.classList.remove('invalid');
+});
 goTo(0);
 initDB();
 
@@ -2038,6 +2176,7 @@ globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview
   renderLoqateResults, clearLoqateResults, searchLoqate, pickLoqateAddress, initLoqate,
   handleFieldInput, renderLoqateRaw, LOQATE_DEFAULT_KEY,
   MOCK_CLIENTS, findMockClients, pickMockClient, initClientLookup,
+  MOCK_OFFICES, getOfficeByName, populateOfficeSelect, populateNegotiatorSelect, onOfficeChange,
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
 
