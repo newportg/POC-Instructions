@@ -379,6 +379,14 @@
           "binarySource": "managed",
           "probeSessionId": "ses_f13a78a52ffeb5D47jpLqymTba"
         }
+      },
+      "180d0e18-745c-478f-bcd9-e688b73038f0": {
+        "opencode": {
+          "binaryPath": "C:\\Users\\NEWPORTG\\.obsidian-copilot\\opencode\\2.0.3\\bin\\opencode.exe",
+          "binaryVersion": "2.0.3",
+          "binarySource": "managed",
+          "probeSessionId": "ses_eea66ffd2ffeU8IzMQ4yZikpyW"
+        }
       }
     }
   },
@@ -486,6 +494,15 @@
       },
       "configuredModelId": "703573dc-2c5a-42c7-8e04-db95012bb4ea",
       "configuredAt": 1791201497468
+    },
+    {
+      "providerId": "23e84d7f-9b99-4591-9ccd-5b81377f980c",
+      "info": {
+        "id": "opencode/exo-free",
+        "displayName": "opencode/Exo Free"
+      },
+      "configuredModelId": "0a9e7f8c-9c66-49d8-ba4c-9b2aa38ec33f",
+      "configuredAt": 1791363712251
     }
   ],
   "backends": {
