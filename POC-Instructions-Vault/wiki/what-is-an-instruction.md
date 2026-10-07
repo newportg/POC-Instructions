@@ -15,6 +15,34 @@ An instruction is not the same as an enquiry or a lead. It is an authorisation: 
 
 A complete instruction carries enough detail for the professional to open a matter, act safely, and bill for the work. The standard components:
 
+```mermaid
+flowchart TD
+    INSTR["Instruction<br/>formal authorisation to act"]
+
+    subgraph WHO["Who instructs"]
+        A["Instructing party<br/>name · capacity · KYC / AML"]
+        B["Authority to act<br/>engagement letter · POA"]
+    end
+
+    subgraph WHAT["What is being instructed"]
+        C["Matter and transaction<br/>type · price · deposit · dates"]
+        D["Property details<br/>address · title number · tenure"]
+        E["Parties<br/>other side · solicitor · agent"]
+        F["Lender details<br/>lender · loan · conditions"]
+    end
+
+    subgraph TERMS["On what terms"]
+        G["Scope of work<br/>included · excluded"]
+        H["Fee basis<br/>rate · VAT · disbursements"]
+        I["Compliance and risk<br/>conflicts · AML · source of funds"]
+        J["Communication and status<br/>contact · fee earner · audit trail"]
+    end
+
+    INSTR --> WHO
+    INSTR --> WHAT
+    INSTR --> TERMS
+```
+
 ### Instructing party
 
 - Client name and contact details
@@ -71,14 +99,14 @@ A complete instruction carries enough detail for the professional to open a matt
 
 ## Lifecycle
 
-1. **Received** — instruction arrives (signed form, portal, email, phone).
-2. **Reviewed** — conflicts, capacity, KYC, and scope checked; queries raised with the client.
-3. **Accepted or declined** — the professional confirms or refuses to act.
-4. **Opened** — matter/file created, property and parties recorded, work allocated.
-5. **Varied** — scope changes are re-instructed and logged, not assumed.
-6. **Completed** — transaction finishes, final bill issued.
-7. **Closed** — file closed and retained per record-keeping rules.
+1. **Received**, instruction arrives (signed form, portal, email, phone).
+2. **Reviewed**, conflicts, capacity, KYC, and scope checked; queries raised with the client.
+3. **Accepted or declined**, the professional confirms or refuses to act.
+4. **Opened**, matter/file created, property and parties recorded, work allocated.
+5. **Varied**, scope changes are re-instructed and logged, not assumed.
+6. **Completed**, transaction finishes, final bill issued.
+7. **Closed**, file closed and retained per record-keeping rules.
 
 ---
 
-> **Note:** Written from general real estate domain knowledge — no source material in `/raw` defines "instruction" for this POC. If the POC uses a narrower or specific definition (e.g. a particular CRM entity), update this entry with it.
+
