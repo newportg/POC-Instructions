@@ -359,6 +359,112 @@ pre {
 code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: var(--accent); }
 pre code { color: var(--text); }
 
+/* Per-tab documentation block */
+.docs {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+}
+.docs > summary {
+  cursor: pointer;
+  padding: 0.7rem 1.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  list-style: none;
+}
+.docs > summary::-webkit-details-marker { display: none; }
+.docs > summary::before {
+  content: '▸';
+  color: var(--accent);
+  font-size: 0.7rem;
+  transition: transform 0.15s;
+}
+.docs[open] > summary::before { transform: rotate(90deg); }
+.docs > summary:hover { color: var(--text); background: var(--surface2); }
+.docs > summary .docs-tab {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(99,102,241,0.2);
+  color: var(--accent);
+}
+.docs-body {
+  padding: 0.25rem 1.25rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+.docs h4 {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--accent);
+  margin: 1.15rem 0 0.55rem;
+}
+.docs h4:first-child { margin-top: 0.9rem; }
+.docs dl { font-size: 0.82rem; }
+.docs dt {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.docs dt span { color: var(--text-dim); font-family: inherit; font-weight: 400; }
+.docs dd {
+  margin: 0.1rem 0 0.7rem;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+.docs dd code { font-size: 0.76rem; }
+.docs-tree {
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.8rem 0.9rem;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  white-space: pre;
+  overflow-x: auto;
+  color: var(--text-dim);
+  margin: 0;
+}
+.docs-tree b { color: var(--text); font-weight: 600; }
+.docs-tree .t-ext { color: var(--warning); }
+.docs-tree .t-mock { color: var(--accent2); }
+.docs-tree .t-local { color: var(--success); }
+.docs-conn { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.conn {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.7rem;
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  max-width: 100%;
+}
+.conn .tag {
+  flex-shrink: 0;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+}
+.tag-local { background: rgba(16,185,129,0.18); color: var(--success); }
+.tag-mock { background: rgba(139,92,246,0.18); color: var(--accent2); }
+.tag-ext { background: rgba(245,158,11,0.18); color: var(--warning); }
+.conn b { color: var(--text); font-weight: 600; }
+
 @media (max-width: 768px) {
   body { padding: 1rem; }
   h1 { font-size: 1.75rem; }
@@ -400,6 +506,41 @@ pre code { color: var(--text); }
       <code>kf_serviceline</code>.
     </p>
   </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">Step 1</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>Type grid <span>— #typeGrid</span></dt>
+        <dd>13 instruction-type cards. Picking one sets <code>state.type</code>, which selects the
+          specialised entity and the fields rendered on the Details tab. The Type pill in the step bar
+          stays uncoloured until a choice is made.</dd>
+        <dt>Hint <span>— #typeHint</span></dt>
+        <dd>Notes that the core record links to exactly one service-line parent, chosen by
+          <code>kf_serviceline</code>.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>Create an Instruction</b>
+└── <b>Step 1 · Type</b>            <span class="t-local">#panel-type</span>
+    ├── Type grid            <span class="t-local">#typeGrid</span>
+    │   └── TYPES[sales … development]
+    │       │                <span class="t-local">13 entries, in-page config</span>
+    │       ├── state.type   <span class="t-local">→ drives Steps 4 and 6</span>
+    │       └── entity       <span class="t-ext">kf_SalesInstruction … kf_DevelopmentProject</span>
+    └── Hint                 <span class="t-local">#typeHint</span>
+        └── kf_serviceline   <span class="t-local">→ 1 of 13 service-line parent lookups</span></pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>TYPES</b> — in-page config, sourced from <code>raw/EU CRM Data Model.xlsx</code>. No network, no fixture.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Draft cache</b> — any change writes to the SQLite draft held in <code>lib/sql-asm.js</code> and persisted to browser storage.</span></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- STEP 2: CLIENT -->
@@ -452,6 +593,47 @@ pre code { color: var(--text); }
       </div>
     </div>
   </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">Step 2</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>Client lookup <span>— #clientLookup · #clientLookupResults</span></dt>
+        <dd>Search over an in-page fixture of 15 private and corporate clients in the UK, Spain, France,
+          Germany and Poland. Type 2+ characters and click a result to fill the form below. Carries a
+          <strong>MOCK DATA</strong> badge so it is never mistaken for a real integration.</dd>
+        <dt>Status line <span>— #clientLookupStatus</span></dt>
+        <dd>Records how many fixtures are available, which countries they cover, and the minimum
+          character count before results appear.</dd>
+        <dt>Client form <span>— #panel-client .form-grid</span></dt>
+        <dd>Six fields written into <code>state.client</code>. <strong>Client name</strong> and
+          <strong>Primary contact</strong> are required; the rest are optional. The invoicing legal
+          entity only differs from the client for some structures.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>Create an Instruction</b>
+└── <b>Step 2 · Client</b>          <span class="t-local">#panel-client</span>
+    ├── Mock client lookup   <span class="t-local">#clientLookup → #clientLookupResults</span>
+    │   └── MOCK_CLIENTS     <span class="t-mock">MOCK · 15 records, in-page, no network</span>
+    │       └── pickMockClient()  fills the form below
+    └── Client form          <span class="t-local">#panel-client .form-grid</span>
+        └── state.client     <span class="t-local">→ SQLite draft</span>
+            └── kf_Instruction
+                ├── kf_clientaccountid
+                ├── kf_legalentityaccountid
+                └── kf_primarycontactid</pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-mock">MOCK</span>
+          <span><b>MOCK_CLIENTS</b> — local fixture of 15 records. No client is ever looked up over the network.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Draft cache</b> — every field change writes to the SQLite draft in <code>lib/sql-asm.js</code>.</span></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- STEP 3: PROPERTY -->
@@ -548,6 +730,49 @@ pre code { color: var(--text); }
       </div>
     </div>
   </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">Step 3</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>Address search <span>— .loqate-box · #loqateQuery · #loqateResults</span></dt>
+        <dd>Loqate typeahead. Pick a country first, type 3+ characters, then choose a suggestion. The
+          suggestion is verified before the form is filled. Gated on country so a bare query cannot
+          match an address in the wrong territory.</dd>
+        <dt>API key <span>— #loqateKey · #loqateKeySave (collapsible)</span></dt>
+        <dd>Defaults to the POC key and is stored in <code>localStorage.loqate_api_key</code>. Only
+          needed if you want to override it.</dd>
+        <dt>Verify response (raw) <span>— #loqateRaw (collapsible)</span></dt>
+        <dd>The unparsed Batch Verify payload, kept for debugging truncation and field-mapping issues.</dd>
+        <dt>Address form <span>— #panel-property .form-grid</span></dt>
+        <dd>Written into <code>state.property</code>. <strong>Address, City, Postcode and Country</strong>
+          are required. Title number and sector are free/choice fields; <strong>Lease term</strong> only
+          appears when tenure is <em>Leasehold</em>.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>Create an Instruction</b>
+└── <b>Step 3 · Property</b>        <span class="t-local">#panel-property</span>
+    ├── Address search       <span class="t-local">.loqate-box</span>
+    │   ├── Find             <span class="t-ext">EXTERNAL · api.addressy.com/Capture/Interactive/Find/v1.20</span>
+    │   ├── Verify           <span class="t-ext">EXTERNAL · api.addressy.com/Cleansing/International/Batch/v1.20</span>
+    │   └── Key + raw panel  <span class="t-local">#loqateKey · #loqateRaw</span>
+    └── Address form         <span class="t-local">#panel-property .form-grid</span>
+        └── state.property   <span class="t-local">→ SQLite draft</span>
+            └── kf_Instruction.kf_propertyid</pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-ext">EXTERNAL</span>
+          <span><b>Loqate</b> — Find v1.20 then Batch v1.20 Verify, fetched straight from the browser,
+            only after a country is selected. This is the sole outbound call in the app.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Everything else</b> — the raw Verify panel, the address fields and the SQLite draft
+            never leave the browser.</span></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- STEP 4: DETAILS (dynamic) -->
@@ -562,6 +787,45 @@ pre code { color: var(--text); }
     </div>
     <div class="form-grid" id="detailsFields"></div>
   </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">Step 4</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>Header <span>— #detailsTitle · #detailsSub</span></dt>
+        <dd>Names the chosen type and shows the entity it will create (<code>kf_SalesInstruction</code>,
+          <code>kf_Deal</code>, …) plus its service line.</dd>
+        <dt>Dynamic fields <span>— #detailsFields</span></dt>
+        <dd>Built from <code>TYPES[state.type].fields</code>. Only the selected type's fields are
+          rendered, required ones are flagged, and conditional fields appear only when their parent
+          choice matches — for example management fields under <em>Let &amp; Manage</em> or
+          <em>Full Management</em>.</dd>
+        <dt>Empty state</dt>
+        <dd>Renders nothing until a type is chosen on Step 1. The Details pill in the step bar is never
+          green before that, and the readiness row reports “instruction type not selected”.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>Step 1 · Type</b>  <span class="t-local">#panel-type</span>
+    └── TYPES[state.type].fields
+        └── <b>Step 4 · Details</b>   <span class="t-local">#panel-details</span>
+            ├── Header         <span class="t-local">#detailsTitle · #detailsSub</span>
+            └── Fields         <span class="t-local">#detailsFields</span>
+                └── state.details  <span class="t-local">→ SQLite draft</span>
+                    └── <b>specialised record</b>
+                        <span class="t-ext">kf_SalesInstruction … kf_DevelopmentProject</span></pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>TYPES config</b> — no network and no fixture. The field list is decided entirely by
+            the choice made on Step 1.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Draft cache</b> — each field writes to the SQLite draft in <code>lib/sql-asm.js</code>.</span></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- STEP 5: TERMS -->
@@ -624,6 +888,57 @@ pre code { color: var(--text); }
       </div>
     </div>
   </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">Step 5</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>Owning office <span>— #owningOffice</span></dt>
+        <dd>Select over the mock office directory: 10 offices across the UK, Spain, France, Germany and
+          Poland, each showing its country. Choosing one sets the negotiator list and defaults the
+          currency. <strong>Required.</strong></dd>
+        <dt>Assigned to <span>— #assignedTo</span></dt>
+        <dd>Negotiator select fed from the chosen office's list. Rebuilt whenever the office changes,
+          because a negotiator belongs to one office. A draft saved with a negotiator that is no longer
+          in the office's list keeps it as an <em>(saved)</em> option rather than dropping it.
+          <strong>Required.</strong></dd>
+        <dt>Currency <span>— #currency</span></dt>
+        <dd>A <em>default, not a fixed value</em>. The office sets it only while you have not chosen one
+          yourself: UK → GBP, eurozone (ES/FR/DE) → EUR, Poland → PLN. An explicit choice is flagged as
+          user-set and survives later office changes.</dd>
+        <dt>Fee basis, fee amount, expected revenue</dt>
+        <dd>Commercial terms into <code>state.terms</code>. Fee basis is required; fee amount and
+          expected revenue are optional. The fee payload (<code>kf_fee</code>,
+          <code>kf_feebasis</code>, <code>kf_currency</code>) is only emitted once a fee amount exists.</dd>
+        <dt>Notes <span>— #notes</span></dt>
+        <dd>Free text for anything exceptional about the matter.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>Step 5 · Terms</b>               <span class="t-local">#panel-terms</span>
+    ├── Owning office        <span class="t-local">#owningOffice</span>
+    │   └── MOCK_OFFICES     <span class="t-mock">MOCK · 10 offices, 5 countries, in-page</span>
+    │       ├── currency     <span class="t-mock">default, overridable</span>
+    │       │                <span class="t-mock">UK→GBP · ES/FR/DE→EUR · PL→PLN</span>
+    │       └── negotiators  <span class="t-local">→ #assignedTo</span>
+    ├── Assigned to          <span class="t-local">#assignedTo</span>
+    └── Fee form             <span class="t-local">.form-grid → state.terms</span>
+        ├── kf_owningoffice · kf_expectedrevenue
+        ├── kf_negotiator  <span class="t-local">(or kf_valuer on valuation)</span>
+        └── kf_fee · kf_feebasis · kf_currency</pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-mock">MOCK</span>
+          <span><b>MOCK_OFFICES</b> — local directory of 10 offices with their own negotiator lists.
+            No office, negotiator or currency is resolved over the network.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Draft cache</b> — the terms panel writes to the SQLite draft in
+            <code>lib/sql-asm.js</code>; the office and negotiator are rehydrated from it on restore.</span></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <!-- STEP 6: REVIEW -->
@@ -671,6 +986,53 @@ pre code { color: var(--text); }
       <button class="btn" id="copyBtn">Copy JSON</button>
     </div>
   </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">Step 6</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>Success banner <span>— #successBanner</span></dt>
+        <dd>Hidden until acceptance. Shows the generated reference in <code>INS-{SEQNUM:6}</code>
+          format. Editing afterwards returns the draft to unaccepted and hides it again.</dd>
+        <dt>Readiness rows <span>— #readiness</span></dt>
+        <dd>One row per step 1–5. Green when complete; red listing exactly which required fields are
+          missing. Each row's “go to step” link jumps to that tab. Details reports “instruction type not
+          selected” rather than green until a type exists.</dd>
+        <dt>Accept error <span>— #acceptError</span></dt>
+        <dd>Lists the steps still short of their required fields if acceptance is attempted early.</dd>
+        <dt>Review grid <span>— #reviewGrid</span></dt>
+        <dd>One read-only card per section — Type, Client, Property, Details, Terms — each with an
+          <em>edit</em> link back to its step.</dd>
+        <dt>Navigation <span>— Back · Start over · Accept instruction</span></dt>
+        <dd><strong>Accept is disabled while any readiness row is red</strong>, and states why in its
+          tooltip. Start over wipes the SQLite draft as well as the screen.</dd>
+        <dt>Accepted record <span>— #jsonCard · #jsonOut</span></dt>
+        <dd>The payload frozen at acceptance: core <code>kf_Instruction</code> plus the type's
+          specialised record, with a copy button.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>Step 6 · Review</b>              <span class="t-local">#panel-review</span>
+    ├── Readiness            <span class="t-local">#readiness</span>
+    │   ├── missingRequired()   <span class="t-local">Steps 1–5 required fields</span>
+    │   └── #acceptBtn          <span class="t-local">gate: disabled until every row is green</span>
+    ├── Review grid          <span class="t-local">#reviewGrid ← state.*  (read-only)</span>
+    └── Accepted record      <span class="t-local">#jsonCard ← state.payload</span>
+        │                     <span class="t-local">frozen by buildRecord() at acceptance</span>
+        └── { kf_Instruction, [type entity] }</pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Acceptance</b> — entirely client-side. <code>buildRecord()</code> freezes the JSON in
+            the browser; nothing is posted anywhere and no backend exists.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Draft cache</b> — the SQLite draft in <code>lib/sql-asm.js</code> is cleared by
+            <em>Start over</em> and written to browser storage on every change.</span></div>
+      </div>
+    </div>
+  </details>
 </div>
 
 <div class="wizard-nav" id="mainNav">
