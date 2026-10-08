@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "ea55df58b4a3a2d0",
+        "id": "2457774a71d22f8c",
         "type": "tabs",
         "children": [
           {
-            "id": "8e6f48ee9514bfb5",
+            "id": "c39d157263937f4d",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "wiki/instruction-in-eu-crm-data-model.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "instruction-in-eu-crm-data-model"
+              "title": "New tab"
             }
           }
         ]
@@ -201,11 +197,11 @@
       "templater-obsidian:Templater": false
     }
   },
-  "active": "8e6f48ee9514bfb5",
+  "active": "38cb4dc00bab30b5",
   "lastOpenFiles": [
+    "wiki/instruction-in-eu-crm-data-model.md",
     "wiki/types-of-instruction.md",
     "wiki/instruction-information-requirements.md",
-    "wiki/instruction-in-eu-crm-data-model.md",
     "wiki/what-is-an-instruction.md",
     "raw/European CRM Architecture Review 2.pdf",
     "POC/lib/sql-asm.js",

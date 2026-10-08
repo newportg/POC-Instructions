@@ -420,3 +420,15 @@ The bars are collapsed by default so they don't crowd the forms. Say the word if
 
 **ai**: 
 [Timestamp: 2026/10/08 12:52:13]
+
+**user**: this is goin gon to long
+[Timestamp: 2026/10/08 14:35:45]
+
+**ai**: 
+[Timestamp: 2026/10/08 14:35:45]
+
+**user**: can you document the rules listed in the raw pdf file in a wiki page
+[Timestamp: 2026/10/08 14:54:45]
+
+**ai**: 
+[Timestamp: 2026/10/08 14:54:45]
