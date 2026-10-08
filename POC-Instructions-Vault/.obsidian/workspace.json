@@ -203,11 +203,11 @@
   },
   "active": "8e6f48ee9514bfb5",
   "lastOpenFiles": [
-    "wiki/instruction-information-requirements.md",
     "wiki/types-of-instruction.md",
+    "wiki/instruction-information-requirements.md",
+    "wiki/instruction-in-eu-crm-data-model.md",
     "wiki/what-is-an-instruction.md",
     "raw/European CRM Architecture Review 2.pdf",
-    "wiki/instruction-in-eu-crm-data-model.md",
     "POC/lib/sql-asm.js",
     "POC/lib",
     "POC/instruction-wizard.html",

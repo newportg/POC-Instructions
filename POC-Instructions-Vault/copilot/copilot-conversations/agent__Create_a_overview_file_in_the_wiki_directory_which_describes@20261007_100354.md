@@ -1,11 +1,12 @@
 ---
-epoch: 1791363834750
+epoch: 1791363834000
 mode: agent
 backendId: opencode
 projectId: "667e1b8b-72e3-4ea1-ac5a-407bdd2e9a05"
 sessionId: "ses_eea661c5bffejB2xrbuY0Id0vB"
 agentLabel: "Real estate instruction wiki overview"
-usage: '{"usedTokens":135225,"contextWindow":200000,"updatedAt":1791393354409}'
+lastAccessedAt: 1791445891533
+usage: '{"usedTokens":101886,"contextWindow":200000,"updatedAt":1791452867356}'
 tags:
   - copilot-conversation
 ---
@@ -349,3 +350,73 @@ What changed on the Terms tab:
 
 One note on the earlier question: I still found no fee-basis-to-instruction-type mapping in `raw/` — `kf_feebasis` is only emitted alongside `kf_fee` when a fee amount is present, regardless of type.
 [Timestamp: 2026/10/07 18:14:00]
+
+**user**: on each tab of the app could you include a documentation section, with a description of the sections on the page, and maybe a diagram showing where the component exists in the hirearchy, calling out external connections or mocks
+[Timestamp: 2026/10/08 10:32:39]
+
+**ai**: I'll read the full app structure first so the documentation sections describe the real components.Now let me verify the actual external connections and persistence so the docs are accurate.The harness stubs all DOM queries, so markup additions are test-safe. Let me add the docs CSS first:Now the six documentation blocks. Starting with the Type tab:Tests pass. Let me run the structural checks from a script file to avoid shell quoting issues:All 122 "bare-amp" hits are JS `&&` operators inside the `<script>` block — my check was too naive. Let me re-check only the HTML markup:Found it — a dropped quote in my check script (not in the app). Rewriting the check without regex constructors:HTML has zero unescaped ampersands and all tags balance. Now let me verify the tree diagrams render with correct alignment:Let me verify the type-card count I claimed (I counted 13 keys in the grep, not 14):It's 13 types, not 14. Fixing the two places I wrote that:Verifying my factual claims against the code, then running the full suite:All claims verified. Committing:There's a commit between mine that I didn't make — let me check what changed:That commit is yours — it picked up the previously-untracked `raw/*.xlsx`, `raw/*.pdf` and `international-addressing.html`, and didn't touch the wizard. My changes are on top of it.
+
+Let me spot-check one block as written in the file:Done — committed as `b8dbf09`. 347/347 tests pass, JS parses, all tags balance, zero unescaped ampersands in the HTML.
+
+## What each tab now carries
+
+A collapsed **Documentation — sections, hierarchy & connections** bar sits at the bottom of all six panels, with three parts:
+
+**1. Sections on this page** — a definition list naming each visible block and its element id, what it does, and which fields are required. E.g. the Property tab documents the address search, the collapsible API key, the raw Verify panel, and the address form's four required fields.
+
+**2. Where this sits** — an ASCII tree showing the component's place in the hierarchy, annotated with its data-model destination:
+
+```
+Create an Instruction
+└── Step 3 · Property        #panel-property
+    ├── Address search       .loqate-box
+    │   ├── Find             EXTERNAL · api.addressy.com/.../Find/v1.20
+    │   ├── Verify           EXTERNAL · api.addressy.com/.../Batch/v1.20
+    │   └── Key + raw panel  #loqateKey · #loqateRaw
+    └── Address form         #panel-property .form-grid
+        └── state.property   → SQLite draft
+            └── kf_Instruction.kf_propertyid
+```
+
+**3. Connections** — colour-coded chips. Enumerating the whole app:
+
+| Chip | Where | What |
+|---|---|---|
+| **EXTERNAL** | Property | Loqate Find v1.20 → Batch v1.20 Verify — the *only* outbound call in the app |
+| **MOCK** | Client | `MOCK_CLIENTS` — 15 fixtures, 3 per country across UK/ES/FR/DE/PL |
+| **MOCK** | Terms | `MOCK_OFFICES` — 10 offices with per-office negotiators and currency defaults |
+| **LOCAL** | all six | SQLite draft in `lib/sql-asm.js`; in-page `TYPES` config; client-side acceptance |
+
+Details and Type carry no chips beyond LOCAL, which makes the two mocks and the single external dependency visible at a glance.
+
+## Verification
+
+Every claim was checked against the code rather than written from memory — which caught two of my own errors: I'd written "14 instruction-type cards" when `TYPES` has **13** (also fixed in the tree comment), and I confirmed the client fixture really is 15 records at 3 per country. Also verified: the required-field sets come from `REQUIRED_LABELS`, `STEPS.slice(0, 5)` gives the five readiness rows, `hideIf === 'noMgmt'` drives the conditional management fields, and the fee payload is genuinely only emitted once a fee amount exists.
+
+Two notes:
+
+- Your own commit `4286bea` landed between my last one and this — it picked up the previously-untracked `raw/*.xlsx`, `raw/*.pdf` and `international-addressing.html`, and didn't touch the wizard. That closes the "untracked raw files" open item from earlier.
+- I still can't do visual verification: no desktop browser is connected, so the layout, the dashed-border styling and the tree alignment are unexercised beyond structural checks. Worth a look when you next open the preview.
+
+The bars are collapsed by default so they don't crowd the forms. Say the word if you'd rather they start open, or open on the landing tab only.
+[Timestamp: 2026/10/08 10:32:39]
+
+**user**: can you create a new page in the app for WIP. A completed instruction review should appear in the WIP. the WIP should be able list items by Country/branch or negotiator and should total by expected value and fee totals. The WIP should included some Mocked Instructions.
+[Timestamp: 2026/10/08 10:59:14]
+
+**ai**: I'll read the app's structure and persistence layer before building this.Now I'll build it. First the CSS:Now the HTML restructure — view switcher and a wrapper around the wizard:Now the JavaScript. Let me check how the harness handles async DB init so my tests fit:Now the WIP JavaScript module. Let me locate the insertion point:Now the WIP module:Now wire the persistence into `initDB`. Let me read it:Now verify it parses and the existing suite still passes:
+
+**Error:** Internal error: Internal service failure
+[Timestamp: 2026/10/08 10:59:14]
+
+**user**: can you compare the app with the pdf document in the raw folder, is the app a fair representation of the requirements in the pdf
+[Timestamp: 2026/10/08 11:25:41]
+
+**ai**: 
+[Timestamp: 2026/10/08 11:25:41]
+
+**user**: hows it goin
+[Timestamp: 2026/10/08 12:52:13]
+
+**ai**: 
+[Timestamp: 2026/10/08 12:52:13]

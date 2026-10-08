@@ -465,6 +465,174 @@ pre code { color: var(--text); }
 .tag-ext { background: rgba(245,158,11,0.18); color: var(--warning); }
 .conn b { color: var(--text); font-weight: 600; }
 
+/* App-level view switch (Create / WIP) */
+.app-nav {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0.75rem;
+}
+.app-tab {
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.5rem 1.1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+.app-tab:hover { background: var(--surface2); color: var(--text); }
+.app-tab.active {
+  border-color: var(--accent);
+  background: rgba(99,102,241,0.15);
+  color: var(--text);
+}
+.app-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(139,92,246,0.25);
+  color: var(--accent2);
+}
+.app-tab.active .app-badge { background: var(--accent); color: #fff; }
+
+/* WIP page */
+.wip-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem 1rem;
+  margin-bottom: 1rem;
+}
+.wip-controls label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+}
+.wip-controls select,
+.wip-controls input {
+  font: inherit;
+  font-size: 0.85rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text);
+}
+.wip-controls input { min-width: 240px; }
+.wip-controls input::placeholder { color: var(--text-dim); }
+
+.wip-totals { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
+.wip-chip {
+  flex: 1;
+  min-width: 220px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: 0.5rem;
+  padding: 0.65rem 0.9rem;
+}
+.wip-chip .k {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 0.2rem;
+}
+.wip-chip .v {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.wip-chip .v .cur { color: var(--accent2); font-size: 0.85rem; margin-right: 0.25rem; }
+.wip-chip .sub { display: block; font-size: 0.72rem; font-weight: 400; color: var(--text-dim); margin-top: 0.15rem; }
+
+.wip-table-wrap { overflow-x: auto; }
+.wip-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.wip-table th {
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-dim);
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.wip-table td {
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid rgba(42,42,58,0.6);
+  color: var(--text-dim);
+  vertical-align: top;
+}
+.wip-table tbody tr:hover td { background: rgba(99,102,241,0.06); }
+.wip-table .ref {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.78rem;
+  color: var(--text);
+  white-space: nowrap;
+}
+.wip-table .client { color: var(--text); }
+.wip-table .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.wip-table .cur { color: var(--accent2); font-size: 0.7rem; font-weight: 700; margin-right: 0.3rem; }
+.wip-table .type-cell { white-space: nowrap; }
+.wip-table tr.wip-group td {
+  background: var(--surface2);
+  color: var(--text);
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.wip-table tr.wip-group .g-label { display: flex; align-items: center; gap: 0.5rem; }
+.wip-table tr.wip-group .g-label .g-key {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--accent);
+}
+.wip-table tr.wip-group td.num { color: var(--text); font-weight: 700; }
+.wip-table tr.wip-total td {
+  background: rgba(99,102,241,0.1);
+  color: var(--text);
+  font-weight: 700;
+  border-top: 2px solid var(--accent);
+}
+.src-badge {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+.src-accepted { background: rgba(16,185,129,0.18); color: var(--success); }
+.src-mock { background: rgba(139,92,246,0.18); color: var(--accent2); }
+.wip-empty {
+  display: none;
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+.wip-empty.show { display: block; }
+.wip-hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.75rem; }
+
 @media (max-width: 768px) {
   body { padding: 1rem; }
   h1 { font-size: 1.75rem; }
@@ -474,7 +642,17 @@ pre code { color: var(--text); }
 </head>
 <body>
 
-<h1>Create an Instruction</h1>
+<h1 id="pageTitle">Create an Instruction</h1>
+
+<nav class="app-nav" id="appNav">
+  <button type="button" class="app-tab active" data-view="create" id="tabCreate">Create</button>
+  <button type="button" class="app-tab" data-view="wip" id="tabWip">
+    Work in progress <span class="app-badge" id="wipBadge">0</span>
+  </button>
+</nav>
+
+<div class="view" id="view-create">
+
 <p class="subtitle">Move freely between steps — fields change with the instruction type. The instruction is only accepted at Review.</p>
 
 <div class="save-status" id="saveStatus"><span class="dot"></span><span id="saveStatusText">SQLite cache: initialising…</span></div>
@@ -1040,6 +1218,102 @@ pre code { color: var(--text); }
   <button class="btn btn-primary" id="nextBtn">Next</button>
 </div>
 
+</div><!-- /#view-create -->
+
+<!-- WIP VIEW -->
+<div class="view" id="view-wip" style="display:none">
+  <p class="subtitle">Every accepted instruction, plus seeded mock records. Group and total by country, branch or negotiator.</p>
+
+  <div class="wip-controls">
+    <label for="wipGroup">Group by</label>
+    <select id="wipGroup">
+      <option value="none">No grouping (flat list)</option>
+      <option value="country">Country</option>
+      <option value="office">Branch (owning office)</option>
+      <option value="negotiator">Negotiator</option>
+    </select>
+    <label for="wipFilter">Filter</label>
+    <input type="text" id="wipFilter" placeholder="Ref, client, country, branch or negotiator" autocomplete="off">
+    <button type="button" class="btn btn-sm" id="wipClear">Clear</button>
+  </div>
+
+  <div class="wip-totals" id="wipTotals"></div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon">🗂️</div>
+      <div>
+        <h2>Instructions</h2>
+        <p id="wipCountLine">—</p>
+      </div>
+    </div>
+    <div class="wip-table-wrap">
+      <table class="wip-table" id="wipTable">
+        <thead>
+          <tr>
+            <th>Ref</th><th>Type</th><th>Client</th><th>Country</th>
+            <th>Branch</th><th>Negotiator</th><th>Cur</th>
+            <th style="text-align:right">Expected</th>
+            <th style="text-align:right">Fee</th><th>Source</th>
+          </tr>
+        </thead>
+        <tbody id="wipBody"></tbody>
+      </table>
+    </div>
+    <div class="wip-empty" id="wipEmpty">No instructions match this filter.</div>
+    <p class="wip-hint">Totals are shown per currency — no exchange rates are applied, so GBP, EUR and PLN are never summed together.</p>
+  </div>
+
+  <details class="docs">
+    <summary><span class="docs-tab">WIP</span> Documentation — sections, hierarchy &amp; connections</summary>
+    <div class="docs-body">
+      <h4>Sections on this page</h4>
+      <dl>
+        <dt>View switch <span>— #appNav · #view-create / #view-wip</span></dt>
+        <dd>Moves between the wizard and this list. The badge on the WIP tab shows the live row count.
+          The wizard keeps its draft while you are away.</dd>
+        <dt>Grouping <span>— #wipGroup</span></dt>
+        <dd>Flat list, or grouped by <strong>Country</strong>, <strong>Branch</strong> (the owning
+          office) or <strong>Negotiator</strong>. Each group header carries that group's own expected
+          and fee subtotals.</dd>
+        <dt>Filter <span>— #wipFilter · #wipClear</span></dt>
+        <dd>Free-text match across reference, type, client, country, branch and negotiator.</dd>
+        <dt>Totals <span>— #wipTotals</span></dt>
+        <dd>Instruction count, total expected value and total fee, each broken down <strong>per
+          currency</strong>. No exchange rate is applied, so a GBP total is never mixed with EUR or PLN.</dd>
+        <dt>Table <span>— #wipTable · #wipBody</span></dt>
+        <dd>One row per instruction. <strong>Source</strong> is either <em>ACCEPTED</em> — pushed here
+          by the Review tab — or <em>MOCK</em> — seeded fixture data.</dd>
+      </dl>
+
+      <h4>Where this sits</h4>
+<pre class="docs-tree"><b>App view</b>  <span class="t-local">#appNav → #view-create | #view-wip</span>
+└── <b>WIP</b>                     <span class="t-local">#view-wip</span>
+    ├── Controls              <span class="t-local">#wipGroup · #wipFilter · #wipClear</span>
+    ├── Totals                <span class="t-local">#wipTotals</span>
+    │   └── per currency      <span class="t-local">no FX conversion applied</span>
+    ├── Table                 <span class="t-local">#wipTable → renderWip()</span>
+    │   ├── rows ← accepted   <span class="t-local">accept() on Step 6 pushes here</span>
+    │   └── rows ← mocks      <span class="t-mock">MOCK_WIP · 15 seeded fixtures</span>
+    └── Storage               <span class="t-local">wip table in SQLite → browser storage</span>
+                              <span class="t-local">fallback: localStorage JSON</span></pre>
+
+      <h4>Connections</h4>
+      <div class="docs-conn">
+        <div class="conn"><span class="tag tag-mock">MOCK</span>
+          <span><b>MOCK_WIP</b> — 15 seeded instructions across the five countries and ten offices.
+            Seeded once, on first load; clearing rows does not resurrect them.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Acceptance feed</b> — <code>accept()</code> on Step 6 writes a flat row here from the
+            frozen payload. Re-accepting the same reference replaces its row rather than duplicating it.</span></div>
+        <div class="conn"><span class="tag tag-local">LOCAL</span>
+          <span><b>Draft cache</b> — rows live in a <code>wip</code> table in the same SQLite database
+            as the draft (<code>lib/sql-asm.js</code>), with a JSON fallback in browser storage. No network.</span></div>
+      </div>
+    </div>
+  </details>
+</div>
+
 <script src="lib/sql-asm.js"></script>
 <script>
 /* ============================================================
@@ -1278,6 +1552,7 @@ function setSaveStatus(text, cls) {
 async function initDB() {
   if (!sqlAvailable) {
     restoreFallback();
+    initWip();
     setSaveStatus('SQLite unavailable — draft cached in browser storage only', 'error');
     return;
   }
@@ -1297,12 +1572,21 @@ async function initDB() {
       ' ref TEXT, status TEXT NOT NULL DEFAULT \'draft\', payload TEXT, saved_at TEXT' +
       ')'
     );
+    db.run(
+      'CREATE TABLE IF NOT EXISTS wip (' +
+      ' ref TEXT PRIMARY KEY,' +
+      ' data TEXT NOT NULL,' +
+      ' created_at TEXT' +
+      ')'
+    );
     restoreFromDB();
+    initWip();
     persist();
     if (!userTouched) setSaveStatus('SQLite cache ready · draft restored', 'saved');
   } catch (e) {
     db = null;
     restoreFallback();
+    initWip();
     setSaveStatus('SQLite init failed — draft cached in browser storage only', 'error');
   }
 }
@@ -2160,6 +2444,340 @@ function onOfficeChange(officeName) {
   renderSteps();
 }
 
+/* ============================================================
+   WIP — work in progress
+   Flat rows: accepted instructions plus seeded mocks. Grouped
+   by country / branch / negotiator and totalled per currency —
+   no FX is applied, so currencies are never summed together.
+   ============================================================ */
+const WIP_FALLBACK_KEY = 'instruction-wizard-wip-v1';
+const WIP_SEEDED_KEY = 'instruction-wizard-wip-seeded-v1';
+
+const WIP_GROUP_LABEL = {
+  none: 'No grouping',
+  country: 'Country',
+  office: 'Branch',
+  negotiator: 'Negotiator'
+};
+
+const MOCK_WIP = [
+  { ref: 'INS-100141', typeKey: 'sales', client: 'Thames Quay Estates Ltd',
+    address: '1 Liverpool Street, London', country: 'United Kingdom', office: 'London',
+    negotiator: 'Alex Johnson', currency: 'GBP', expected: 42000, fee: 15000, feeBasis: 'Fixed fee' },
+  { ref: 'INS-100142', typeKey: 'capitalmarkets', client: 'Blackfriars Asset Management LLP',
+    address: '2 Hardman Square, Manchester', country: 'United Kingdom', office: 'Manchester',
+    negotiator: 'Sophie Taylor', currency: 'GBP', expected: 96000, fee: 48000, feeBasis: 'Percentage' },
+  { ref: 'INS-100143', typeKey: 'lettings', client: 'Eleanor Whitfield',
+    address: '14 Cadogan Place, London', country: 'United Kingdom', office: 'London',
+    negotiator: 'Emma Davies', currency: 'GBP', expected: 8400, fee: 3200, feeBasis: 'Percentage' },
+  { ref: 'INS-100144', typeKey: 'valuation', client: 'Whitfield Family Office Ltd',
+    address: '3 King Street, Manchester', country: 'United Kingdom', office: 'Manchester',
+    negotiator: 'James Wilson', currency: 'GBP', expected: 4500, fee: 4500, feeBasis: 'Fixed fee' },
+
+  { ref: 'INS-100145', typeKey: 'sales', client: 'Costa Azul Desarrollos S.L.',
+    address: 'Gran Vía 28, Madrid', country: 'Spain', office: 'Madrid',
+    negotiator: 'Miguel Fernández', currency: 'EUR', expected: 38000, fee: 12500, feeBasis: 'Percentage' },
+  { ref: 'INS-100146', typeKey: 'leasing', client: 'Sierra Norte Gestión Inmobiliaria S.L.',
+    address: 'Paseo de la Castellana 95, Madrid', country: 'Spain', office: 'Madrid',
+    negotiator: 'Carmen Ruiz', currency: 'EUR', expected: 21000, fee: 9000, feeBasis: 'Fixed fee' },
+  { ref: 'INS-100147', typeKey: 'buildingconsult', client: 'Diego Herrera Salas',
+    address: 'Passeig de Gràcia 87, Barcelona', country: 'Spain', office: 'Barcelona',
+    negotiator: 'Pablo García', currency: 'EUR', expected: 15500, fee: 15500, feeBasis: 'Hourly rate' },
+
+  { ref: 'INS-100148', typeKey: 'capitalmarkets', client: 'Groupe Immobilier Loire S.A.',
+    address: '12 Rue de la Paix, Paris', country: 'France', office: 'Paris',
+    negotiator: 'Claire Fournier', currency: 'EUR', expected: 74000, fee: 37000, feeBasis: 'Percentage' },
+  { ref: 'INS-100149', typeKey: 'propertymgmt', client: 'Résidences Belleville SAS',
+    address: '45 Rue Oberkampf, Paris', country: 'France', office: 'Paris',
+    negotiator: 'Luc Dubois', currency: 'EUR', expected: 26000, fee: 13000, feeBasis: 'Fixed fee' },
+  { ref: 'INS-100150', typeKey: 'valuation', client: 'Patrimoine Rhône SARL',
+    address: '8 Quai Perrache, Lyon', country: 'France', office: 'Lyon',
+    negotiator: 'Julie Blanc', currency: 'EUR', expected: 6200, fee: 6200, feeBasis: 'Fixed fee' },
+
+  { ref: 'INS-100151', typeKey: 'leasing', client: 'Mitte Wohnen GmbH',
+    address: 'Friedrichstraße 100, Berlin', country: 'Germany', office: 'Berlin',
+    negotiator: 'Anna Müller', currency: 'EUR', expected: 33000, fee: 14500, feeBasis: 'Percentage' },
+  { ref: 'INS-100152', typeKey: 'capitaladvisory', client: 'Mainhattan Kapital AG',
+    address: 'Neue Mainzer Straße 52, Frankfurt', country: 'Germany', office: 'Frankfurt',
+    negotiator: 'Lukas Wagner', currency: 'EUR', expected: 118000, fee: 59000, feeBasis: 'Percentage' },
+
+  { ref: 'INS-100153', typeKey: 'investoryadvisory', client: 'Nowak Capital Partners Sp. z o.o.',
+    address: 'Marszałkowska 84, Warsaw', country: 'Poland', office: 'Warsaw',
+    negotiator: 'Katarzyna Nowak', currency: 'PLN', expected: 960000, fee: 384000, feeBasis: 'Percentage' },
+  { ref: 'INS-100154', typeKey: 'development', client: 'Wisła Development Sp. z o.o.',
+    address: 'ul. Prosta 51, Warsaw', country: 'Poland', office: 'Warsaw',
+    negotiator: 'Piotr Kowalski', currency: 'PLN', expected: 450000, fee: 225000, feeBasis: 'Fixed fee' },
+  { ref: 'INS-100155', typeKey: 'valuation', client: 'Odra Nieruchomości Sp. z o.o.',
+    address: 'ul. Świdnicka 12, Wrocław', country: 'Poland', office: 'Wrocław',
+    negotiator: 'Tomasz Mazur', currency: 'PLN', expected: 42000, fee: 42000, feeBasis: 'Fixed fee' }
+];
+
+let wip = [];
+
+function esc(s) {
+  if (s === undefined || s === null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function fmtNum(n) {
+  return String(Math.round(Number(n) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function wipNumVal(v) {
+  return (v === null || v === undefined || v === '') ? 0 : (Number(v) || 0);
+}
+
+function wipNumOrNull(v) {
+  if (v === null || v === undefined || v === '') return null;
+  const n = Number(v);
+  return isFinite(n) ? n : null;
+}
+
+function wipTypeName(r) {
+  const t = TYPES[r.typeKey];
+  return (t && t.name) || r.typeName || '—';
+}
+
+function wipIcon(r) {
+  const t = TYPES[r.typeKey];
+  return (t && t.icon) || r.icon || '•';
+}
+
+/* Flat row built from the accepted draft — feeds the WIP list */
+function wipRowFromState() {
+  return {
+    ref: state.ref,
+    typeKey: state.type,
+    client: state.client.clientName || '',
+    address: [state.property.address, state.property.city].filter(Boolean).join(', '),
+    country: state.property.country || '',
+    office: state.terms.owningOffice || '',
+    negotiator: state.terms.assignedTo || '',
+    currency: state.terms.currency || '',
+    expected: wipNumOrNull(state.terms.expectedRevenue),
+    fee: wipNumOrNull(state.terms.feeAmount),
+    feeBasis: state.terms.feeBasis || '',
+    source: 'accepted',
+    acceptedAt: new Date().toISOString()
+  };
+}
+
+function upsertWip(rec) {
+  if (!rec || !rec.ref) return false;
+  for (let i = 0; i < wip.length; i++) {
+    if (wip[i].ref === rec.ref) { wip[i] = rec; return false; }   // replace, never duplicate
+  }
+  wip.push(rec);
+  return true;
+}
+
+/* Seed the fixtures once. A stored flag stops them coming back
+   if the rows are later cleared. */
+function seedWipIfEmpty() {
+  let seeded = false;
+  try { seeded = localStorage.getItem(WIP_SEEDED_KEY) === '1'; } catch (e) { /* ignore */ }
+  if (seeded) return 0;
+  let added = 0;
+  MOCK_WIP.forEach(r => { if (upsertWip(Object.assign({ source: 'mock' }, r))) added++; });
+  try { localStorage.setItem(WIP_SEEDED_KEY, '1'); } catch (e) { /* ignore */ }
+  return added;
+}
+
+function loadWip() {
+  if (db) {
+    try {
+      const res = db.exec('SELECT data FROM wip ORDER BY ref');
+      if (res.length && res[0].values.length) {
+        const rows = [];
+        res[0].values.forEach(v => {
+          try { rows.push(JSON.parse(v[0])); } catch (e) { /* skip corrupt row */ }
+        });
+        if (rows.length) { wip = rows; return rows; }
+      }
+    } catch (e) { /* table not present yet */ }
+  }
+  try {
+    const raw = localStorage.getItem(WIP_FALLBACK_KEY);
+    if (raw) {
+      const arr = JSON.parse(raw);
+      if (Array.isArray(arr) && arr.length) { wip = arr; return arr; }
+    }
+  } catch (e) { /* ignore */ }
+  return null;
+}
+
+function persistWip() {
+  if (db) {
+    try {
+      db.run('DELETE FROM wip');
+      wip.forEach(r => db.run(
+        'INSERT INTO wip (ref, data, created_at) VALUES (?,?,?)',
+        [r.ref, JSON.stringify(r), new Date().toISOString()]));
+      localStorage.setItem(DB_STORE_KEY, bytesToB64(db.export()));
+      setSaveStatus('WIP cached in SQLite · ' + new Date().toLocaleTimeString(), 'saved');
+      return true;
+    } catch (e) { /* fall through to browser storage */ }
+  }
+  try { localStorage.setItem(WIP_FALLBACK_KEY, JSON.stringify(wip)); } catch (e) { /* ignore */ }
+  return false;
+}
+
+function initWip() {
+  loadWip();
+  if (!wip.length) seedWipIfEmpty();
+  persistWip();
+  renderWip();
+}
+
+/* Totals grouped by currency — deliberately never summed across currencies */
+function totalsOf(rows) {
+  const buckets = Object.create(null);
+  rows.forEach(r => {
+    const c = r.currency || '—';
+    if (!buckets[c]) buckets[c] = { currency: c, count: 0, expected: 0, fee: 0 };
+    buckets[c].count++;
+    buckets[c].expected += wipNumVal(r.expected);
+    buckets[c].fee += wipNumVal(r.fee);
+  });
+  return Object.keys(buckets).sort().map(k => buckets[k]);
+}
+
+function moneyParts(list, field) {
+  if (!list.length) return '<span style="opacity:.5">—</span>';
+  return list.map(t =>
+    '<span class="cur">' + esc(t.currency) + '</span>' + fmtNum(t[field])
+  ).join('<span style="opacity:.5"> · </span>');
+}
+
+function groupWip(rows, by) {
+  if (!by || by === 'none') return [{ key: '', rows: rows.slice() }];
+  const buckets = Object.create(null);
+  rows.forEach(r => {
+    let k = r[by];
+    if (isEmpty(k)) k = 'Unassigned';
+    if (!buckets[k]) buckets[k] = [];
+    buckets[k].push(r);
+  });
+  return Object.keys(buckets).sort((a, b) => a.localeCompare(b))
+    .map(k => ({ key: k, rows: buckets[k] }));
+}
+
+function wipMatches(r, q) {
+  if (!q) return true;
+  const hay = [r.ref, wipTypeName(r), r.client, r.address, r.country, r.office, r.negotiator]
+    .join(' ').toLowerCase();
+  return hay.indexOf(q.toLowerCase()) >= 0;
+}
+
+function wipCellMoney(v) {
+  return (v === null || v === undefined || v === '')
+    ? '<span style="opacity:.5">—</span>' : fmtNum(v);
+}
+
+function wipRowHtml(r) {
+  const src = r.source === 'accepted'
+    ? '<span class="src-badge src-accepted">ACCEPTED</span>'
+    : '<span class="src-badge src-mock">MOCK</span>';
+  return '<tr>' +
+    '<td class="ref">' + esc(r.ref) + '</td>' +
+    '<td class="type-cell">' + esc(wipIcon(r)) + ' ' + esc(wipTypeName(r)) + '</td>' +
+    '<td class="client">' + esc(r.client) +
+      (r.address ? '<br><span style="font-size:0.72rem;opacity:.75">' + esc(r.address) + '</span>' : '') +
+    '</td>' +
+    '<td>' + esc(r.country) + '</td>' +
+    '<td>' + esc(r.office) + '</td>' +
+    '<td>' + esc(r.negotiator) + '</td>' +
+    '<td>' + esc(r.currency) + '</td>' +
+    '<td class="num">' + wipCellMoney(r.expected) + '</td>' +
+    '<td class="num">' + wipCellMoney(r.fee) + '</td>' +
+    '<td>' + src + '</td>' +
+    '</tr>';
+}
+
+function wipChip(label, valueHtml, sub) {
+  return '<div class="wip-chip"><span class="k">' + esc(label) + '</span>' +
+    '<span class="v">' + valueHtml + '</span>' +
+    '<span class="sub">' + esc(sub) + '</span></div>';
+}
+
+function renderWip() {
+  const q = String(document.getElementById('wipFilter').value || '').trim();
+  const raw = String(document.getElementById('wipGroup').value || 'none');
+  const by = WIP_GROUP_LABEL[raw] ? raw : 'none';
+
+  const rows = wip.filter(r => wipMatches(r, q));
+  const totals = totalsOf(rows);
+  const accepted = rows.filter(r => r.source === 'accepted').length;
+
+  const badge = document.getElementById('wipBadge');
+  if (badge) badge.textContent = String(wip.length);
+
+  const countLine = document.getElementById('wipCountLine');
+  if (countLine) {
+    countLine.textContent = rows.length + ' of ' + wip.length + ' instruction' +
+      (wip.length === 1 ? '' : 's') +
+      (q ? ' matching "' + q + '"' : '') +
+      (by !== 'none' ? ' · grouped by ' + WIP_GROUP_LABEL[by] : '');
+  }
+
+  const totalsEl = document.getElementById('wipTotals');
+  if (totalsEl) {
+    totalsEl.innerHTML =
+      wipChip('Instructions', esc(String(rows.length)),
+        accepted + ' accepted · ' + (rows.length - accepted) + ' mock') +
+      wipChip('Expected value', moneyParts(totals, 'expected'), 'per currency · no FX applied') +
+      wipChip('Fee total', moneyParts(totals, 'fee'), 'per currency · no FX applied');
+  }
+
+  const groups = groupWip(rows, by);
+  let html = '';
+  groups.forEach(g => {
+    if (by !== 'none') {
+      const gt = totalsOf(g.rows);
+      html += '<tr class="wip-group"><td colspan="7"><span class="g-label">' +
+        '<span class="g-key">' + esc(WIP_GROUP_LABEL[by]) + '</span>' + esc(g.key) +
+        '<span style="color:var(--text-dim);font-weight:400">· ' + g.rows.length +
+        ' instruction' + (g.rows.length === 1 ? '' : 's') + '</span></span></td>' +
+        '<td class="num">' + moneyParts(gt, 'expected') + '</td>' +
+        '<td class="num">' + moneyParts(gt, 'fee') + '</td>' +
+        '<td></td></tr>';
+    }
+    g.rows.forEach(r => { html += wipRowHtml(r); });
+  });
+
+  if (by !== 'none' && rows.length) {
+    html += '<tr class="wip-total"><td colspan="7">Total · ' + rows.length +
+      ' instruction' + (rows.length === 1 ? '' : 's') + '</td>' +
+      '<td class="num">' + moneyParts(totals, 'expected') + '</td>' +
+      '<td class="num">' + moneyParts(totals, 'fee') + '</td>' +
+      '<td></td></tr>';
+  }
+
+  const body = document.getElementById('wipBody');
+  if (body) body.innerHTML = html;
+  const empty = document.getElementById('wipEmpty');
+  if (empty) empty.classList.toggle('show', rows.length === 0);
+  const table = document.getElementById('wipTable');
+  if (table) table.style.display = rows.length === 0 ? 'none' : '';
+}
+
+function showView(v) {
+  const isWip = v === 'wip';
+  const create = document.getElementById('view-create');
+  const wipView = document.getElementById('view-wip');
+  if (create) create.style.display = isWip ? 'none' : '';
+  if (wipView) wipView.style.display = isWip ? '' : 'none';
+  const title = document.getElementById('pageTitle');
+  if (title) title.textContent = isWip ? 'Work in progress' : 'Create an Instruction';
+  const tabCreate = document.getElementById('tabCreate');
+  const tabWip = document.getElementById('tabWip');
+  if (tabCreate) tabCreate.classList.toggle('active', !isWip);
+  if (tabWip) tabWip.classList.toggle('active', isWip);
+  if (isWip) renderWip();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 /* ---------- Step 4: dynamic details fields ---------- */
 function renderDetails() {
   const wrap = document.getElementById('detailsFields');
@@ -2396,8 +3014,11 @@ function accept() {
   if (!state.ref) state.ref = 'INS-' + String(Math.floor(Math.random() * 999999)).padStart(6, '0');
   state.status = 'accepted';
   state.payload = buildRecord();       // frozen snapshot at acceptance
+  upsertWip(wipRowFromState());        // an accepted instruction becomes live WIP
+  persistWip();
   persist();
   renderAcceptance();
+  renderWip();
   window.scrollTo({ top: 0, behavior: 'smooth' });
   return true;
 }
@@ -2522,7 +3143,18 @@ document.getElementById('currency').addEventListener('change', function () {
   const f = this.closest('.field');
   if (f && this.value) f.classList.remove('invalid');
 });
+/* ---------- WIP view wiring ---------- */
+document.getElementById('tabCreate').addEventListener('click', () => showView('create'));
+document.getElementById('tabWip').addEventListener('click', () => showView('wip'));
+document.getElementById('wipGroup').addEventListener('change', renderWip);
+document.getElementById('wipFilter').addEventListener('input', renderWip);
+document.getElementById('wipClear').addEventListener('click', () => {
+  document.getElementById('wipFilter').value = '';
+  renderWip();
+});
+
 goTo(0);
+renderWip();
 initDB();
 
 window.addEventListener('beforeunload', () => {
@@ -2539,6 +3171,10 @@ globalThis.__W = { TYPES, STEPS, state, renderDetails, buildRecord, renderReview
   handleFieldInput, renderLoqateRaw, LOQATE_DEFAULT_KEY,
   MOCK_CLIENTS, findMockClients, pickMockClient, initClientLookup,
   MOCK_OFFICES, getOfficeByName, populateOfficeSelect, populateNegotiatorSelect, onOfficeChange,
+  MOCK_WIP, renderWip, showView, upsertWip, seedWipIfEmpty, loadWip, persistWip, initWip,
+  wipRowFromState, totalsOf, groupWip, wipMatches, wipTypeName, wipChip,
+  getWip: () => wip,
+  setWip: (a) => { wip = Array.isArray(a) ? a.slice() : []; },
   getDb: () => db, getUserTouched: () => userTouched };
 </script>
 
